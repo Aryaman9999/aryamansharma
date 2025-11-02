@@ -1,24 +1,23 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 
 const Blog = () => {
-  const articles = [
-    {
-      title: "3 Things I Learned Building a $200k AI Project at Cvent",
-      description: "Key insights from developing enterprise-scale agentic AI systems and GPU-accelerated workflows.",
-      readTime: "5 min read"
-    },
-    {
-      title: "Why the 'Smart Knee Cap' is a Full-Stack Mechatronics Challenge",
-      description: "From sensor fusion to custom PCB design, exploring the intersection of hardware and software in medical devices.",
-      readTime: "7 min read"
-    },
-    {
-      title: "Prepping for Cadence: My 3-Month Sprint into VLSI & Bare-Metal C",
-      description: "A structured approach to mastering semiconductor design and low-level programming for hardware roles.",
-      readTime: "6 min read"
-    }
-  ];
+  const [articles, setArticles] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadArticles();
+  }, []);
+
+  const loadArticles = async () => {
+    const { data } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .eq("published", true)
+      .order("display_order");
+    if (data) setArticles(data);
+  };
 
   return (
     <section id="blog" className="py-24 px-6">
@@ -27,11 +26,11 @@ const Blog = () => {
           My Field Notes
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
-          {articles.map((article, index) => (
-            <Card key={index} className="hover:shadow-soft-lg transition-shadow duration-300 cursor-pointer border-border">
+          {articles.map((article) => (
+            <Card key={article.id} className="hover:shadow-soft-lg transition-shadow duration-300 cursor-pointer border-border">
               <CardHeader>
                 <CardTitle className="text-lg mb-2">{article.title}</CardTitle>
-                <span className="text-xs text-muted-foreground">{article.readTime}</span>
+                <span className="text-xs text-muted-foreground">{article.read_time}</span>
               </CardHeader>
               <CardContent>
                 <CardDescription className="mb-4">

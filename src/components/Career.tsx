@@ -1,39 +1,22 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 
 const Career = () => {
-  const experiences = [
-    {
-      company: "Cadence",
-      role: "System Design Engineer Intern",
-      status: "Upcoming",
-      period: "2025"
-    },
-    {
-      company: "PEC",
-      role: "Joint Chief, Student Technical Societies",
-      status: "Leadership",
-      period: "2023-2024"
-    },
-    {
-      company: "Cvent",
-      role: "Data Science Intern",
-      status: "PPO Offer",
-      period: "2024"
-    },
-    {
-      company: "Hitachi",
-      role: "Engineering Intern",
-      status: "Completed",
-      period: "2023"
-    },
-    {
-      company: "Vecros",
-      role: "Marketing Intern",
-      status: "Completed",
-      period: "2022"
-    }
-  ];
+  const [experiences, setExperiences] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadExperiences();
+  }, []);
+
+  const loadExperiences = async () => {
+    const { data } = await supabase
+      .from("experiences")
+      .select("*")
+      .order("display_order");
+    if (data) setExperiences(data);
+  };
 
   return (
     <section id="career" className="py-24 px-6 bg-muted/30">
@@ -42,9 +25,9 @@ const Career = () => {
           Career & Experience
         </h2>
         <div className="space-y-6 mb-12">
-          {experiences.map((exp, index) => (
+          {experiences.map((exp) => (
             <div
-              key={index}
+              key={exp.id}
               className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow"
             >
               <div>

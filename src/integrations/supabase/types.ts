@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          description: string
+          display_order: number
+          id: string
+          published: boolean
+          read_time: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          description: string
+          display_order?: number
+          id?: string
+          published?: boolean
+          read_time?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          description?: string
+          display_order?: number
+          id?: string
+          published?: boolean
+          read_time?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      companies: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: string
+          logo_url: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          logo_url?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          logo_url?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       email_list: {
         Row: {
           email: string
@@ -32,6 +92,156 @@ export type Database = {
           id?: string
           metadata?: Json | null
           subscribed_at?: string | null
+        }
+        Relationships: []
+      }
+      experiences: {
+        Row: {
+          company: string
+          created_at: string | null
+          display_order: number
+          id: string
+          period: string
+          role: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          company: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          period: string
+          role: string
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          company?: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          period?: string
+          role?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      hero_content: {
+        Row: {
+          button_primary_text: string
+          button_secondary_text: string
+          created_at: string | null
+          description: string
+          id: string
+          image_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          button_primary_text?: string
+          button_secondary_text?: string
+          created_at?: string | null
+          description: string
+          id?: string
+          image_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          button_primary_text?: string
+          button_secondary_text?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          image_url?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          case_study_url: string | null
+          created_at: string | null
+          description: string
+          display_order: number
+          id: string
+          image_url: string | null
+          tags: string[]
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          case_study_url?: string | null
+          created_at?: string | null
+          description: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          case_study_url?: string | null
+          created_at?: string | null
+          description?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
+      social_links: {
+        Row: {
+          created_at: string | null
+          icon: string | null
+          id: string
+          platform: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          platform: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          platform?: string
+          updated_at?: string | null
+          url?: string
         }
         Relationships: []
       }

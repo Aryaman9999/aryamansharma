@@ -1,23 +1,24 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 const FeaturedWork = () => {
-  const projects = [
-    {
-      title: "IEEE EPICS-Funded Smart Knee Cap",
-      description: "Leading a team to build a wearable device for physiotherapy. Secured $3,800 in IEEE funding to design the custom PCB, sensor fusion algorithms, and data pipeline.",
-      tags: ["Hardware", "MedTech", "Sensors", "AI/ML", "Leadership"],
-      image: "Smart Knee Cap Project"
-    },
-    {
-      title: "Agentic AI & GPU Project at Cvent",
-      description: "Delivered $200k in value and saved 3 FTE hours by developing the company's first-ever agentic AI and GPU-based projects.",
-      tags: ["AI/ML", "Data Science", "Python", "ROI", "Internship"],
-      image: "Agentic AI Architecture"
-    }
-  ];
+  const [projects, setProjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    const { data } = await supabase
+      .from("projects")
+      .select("*")
+      .order("display_order");
+    if (data) setProjects(data);
+  };
 
   return (
     <section id="work" className="py-24 px-6 bg-muted/30">
@@ -26,15 +27,19 @@ const FeaturedWork = () => {
           My Work
         </h2>
         <div className="grid md:grid-cols-2 gap-8">
-          {projects.map((project, index) => (
-            <Card key={index} className="hover:shadow-soft-lg transition-shadow duration-300 border-border">
+          {projects.map((project) => (
+            <Card key={project.id} className="hover:shadow-soft-lg transition-shadow duration-300 border-border">
               <CardHeader>
-                <div className="w-full h-48 bg-accent rounded-md mb-4 flex items-center justify-center text-muted-foreground">
-                  {project.image}
+                <div className="w-full h-48 bg-accent rounded-md mb-4 flex items-center justify-center text-muted-foreground overflow-hidden">
+                  {project.image_url ? (
+                    <img src={project.image_url} alt={project.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm">{project.title}</span>
+                  )}
                 </div>
                 <CardTitle className="text-xl mb-2">{project.title}</CardTitle>
                 <div className="flex flex-wrap gap-2 mb-3">
-                  {project.tags.map((tag) => (
+                  {project.tags?.map((tag: string) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
                       {tag}
                     </Badge>
@@ -45,9 +50,15 @@ const FeaturedWork = () => {
                 <CardDescription className="text-base mb-4">
                   {project.description}
                 </CardDescription>
-                <Button variant="ghost" className="gap-2 px-0 hover:gap-3 transition-all">
-                  View Case Study <ArrowRight className="w-4 h-4" />
-                </Button>
+                {project.case_study_url && (
+                  <Button 
+                    variant="ghost" 
+                    className="gap-2 px-0 hover:gap-3 transition-all"
+                    onClick={() => window.open(project.case_study_url, '_blank')}
+                  >
+                    View Case Study <ArrowRight className="w-4 h-4" />
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))}
