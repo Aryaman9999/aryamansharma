@@ -1,0 +1,46 @@
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Download } from "lucide-react";
+
+const Hero = () => {
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    element?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <section id="hero" className="min-h-screen flex items-center justify-center px-6 pt-20">
+      <div className="container mx-auto max-w-5xl">
+        <div className="flex flex-col md:flex-row items-center gap-12 md:gap-16">
+          <div className="flex-1 text-center md:text-left fade-in-up">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
+              Electronics Engineer at the intersection of{" "}
+              <span className="text-primary">Machine Learning</span> and{" "}
+              <span className="text-secondary">Semiconductor Design</span>
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
+              I'm a final-year ECE student at PEC, an IEEE EPICS-funded project lead, and an incoming intern at Cadence. 
+              I build the full stack of intelligent systems, from AI models that create business value to the hardware they run on.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <Button onClick={() => scrollToSection('work')} size="lg" className="gap-2">
+                View My Work <ArrowRight className="w-4 h-4" />
+              </Button>
+              <Button onClick={() => scrollToSection('about')} variant="outline" size="lg">
+                About Me
+              </Button>
+            </div>
+          </div>
+          <div className="flex-shrink-0 fade-in">
+            <div className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-gradient-to-br from-accent to-muted shadow-soft-lg overflow-hidden">
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                <span className="text-sm">Professional Headshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Hero;
