@@ -12,6 +12,7 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,7 +26,7 @@ const AdminLogin = () => {
     checkUser();
   }, [navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -36,44 +37,57 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+        });
 
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (data.session) {
-        // Check if user has admin role
-        const { data: roleData, error: roleError } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.session.user.id)
-          .eq("role", "admin")
-          .maybeSingle();
-
-        if (roleError) {
-          console.error("Error checking role:", roleError);
-          toast.error("Error verifying admin access");
-          await supabase.auth.signOut();
+        if (error) {
+          toast.error(error.message);
           return;
         }
 
-        if (!roleData) {
-          toast.error("Unauthorized: Admin access required");
-          await supabase.auth.signOut();
+        toast.success("Account created! Please contact admin to grant access.");
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+
+        if (error) {
+          toast.error(error.message);
           return;
         }
 
-        toast.success("Welcome back!");
-        navigate("/admin-dashboard");
+        if (data.session) {
+          const { data: roleData, error: roleError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.session.user.id)
+            .eq("role", "admin")
+            .maybeSingle();
+
+          if (roleError) {
+            console.error("Error checking role:", roleError);
+            toast.error("Error verifying admin access");
+            await supabase.auth.signOut();
+            return;
+          }
+
+          if (!roleData) {
+            toast.error("Unauthorized: Admin access required");
+            await supabase.auth.signOut();
+            return;
+          }
+
+          toast.success("Welcome back!");
+          navigate("/admin-dashboard");
+        }
       }
     } catch (error: any) {
-      console.error("Login error:", error);
-      toast.error("An error occurred during login");
+      console.error("Auth error:", error);
+      toast.error("An error occurred");
     } finally {
       setLoading(false);
     }
@@ -90,11 +104,11 @@ const AdminLogin = () => {
           </div>
           <CardTitle className="text-2xl">Admin Access</CardTitle>
           <CardDescription>
-            Enter your credentials to access the admin dashboard
+            {isSignUp ? "Create an admin account" : "Enter your credentials to access the admin dashboard"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -120,7 +134,16 @@ const AdminLogin = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? (isSignUp ? "Creating account..." : "Signing in...") : (isSignUp ? "Sign Up" : "Sign In")}
+            </Button>
+            <Button 
+              type="button" 
+              variant="ghost" 
+              className="w-full" 
+              onClick={() => setIsSignUp(!isSignUp)}
+              disabled={loading}
+            >
+              {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
             </Button>
           </form>
         </CardContent>
