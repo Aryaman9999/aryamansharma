@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 
 const Blog = () => {
+  const navigate = useNavigate();
   const [articles, setArticles] = useState<any[]>([]);
 
   useEffect(() => {
@@ -27,7 +29,11 @@ const Blog = () => {
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
           {articles.map((article) => (
-            <Card key={article.id} className="hover:shadow-soft-lg transition-shadow duration-300 cursor-pointer border-border">
+            <Card 
+              key={article.id} 
+              className="hover:shadow-soft-lg transition-shadow duration-300 cursor-pointer border-border"
+              onClick={() => navigate(`/blog/${article.id}`)}
+            >
               <CardHeader>
                 <CardTitle className="text-lg mb-2">{article.title}</CardTitle>
                 <span className="text-xs text-muted-foreground">{article.read_time}</span>
