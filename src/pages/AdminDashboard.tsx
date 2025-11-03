@@ -49,6 +49,15 @@ const AdminDashboard = () => {
   // Email list
   const [emailList, setEmailList] = useState<any[]>([]);
 
+  // About content state
+  const [aboutContent, setAboutContent] = useState({
+    id: "",
+    title: "",
+    subtitle: "",
+    content: "",
+    image_url: ""
+  });
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -121,6 +130,13 @@ const AdminDashboard = () => {
         .select("*")
         .order("subscribed_at", { ascending: false });
       if (emailData) setEmailList(emailData);
+
+      const { data: aboutData } = await supabase
+        .from("about_content")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+      if (aboutData) setAboutContent(aboutData);
 
     } catch (error) {
       console.error("Error loading content:", error);
@@ -307,6 +323,25 @@ const AdminDashboard = () => {
     }
   };
 
+  const saveAboutContent = async () => {
+    try {
+      const { error } = await supabase
+        .from("about_content")
+        .update({
+          title: aboutContent.title,
+          subtitle: aboutContent.subtitle,
+          content: aboutContent.content,
+          image_url: aboutContent.image_url
+        })
+        .eq("id", aboutContent.id);
+
+      if (error) throw error;
+      toast.success("About content updated");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
   const deleteEmail = async (id: string) => {
     try {
       const { error } = await supabase.from("email_list").delete().eq("id", id);
@@ -334,8 +369,9 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="hero" className="space-y-6">
-          <TabsList className="grid grid-cols-7 w-full">
+          <TabsList className="grid grid-cols-8 w-full">
             <TabsTrigger value="hero">Hero</TabsTrigger>
+            <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="companies">Companies</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="experiences">Career</TabsTrigger>
@@ -395,6 +431,55 @@ const AdminDashboard = () => {
                 <Button onClick={saveHeroContent}>
                   <Save className="w-4 h-4 mr-2" />
                   Save Hero Content
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* About Content Tab */}
+          <TabsContent value="about">
+            <Card>
+              <CardHeader>
+                <CardTitle>About Section</CardTitle>
+                <CardDescription>Edit your about section content</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input
+                    placeholder="Section title"
+                    value={aboutContent.title}
+                    onChange={(e) => setAboutContent({ ...aboutContent, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Subtitle (optional)</Label>
+                  <Input
+                    placeholder="Optional subtitle"
+                    value={aboutContent.subtitle || ""}
+                    onChange={(e) => setAboutContent({ ...aboutContent, subtitle: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Content</Label>
+                  <Textarea
+                    placeholder="About content (use line breaks for paragraphs)"
+                    value={aboutContent.content}
+                    onChange={(e) => setAboutContent({ ...aboutContent, content: e.target.value })}
+                    rows={12}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Image URL (optional)</Label>
+                  <Input
+                    placeholder="https://..."
+                    value={aboutContent.image_url || ""}
+                    onChange={(e) => setAboutContent({ ...aboutContent, image_url: e.target.value })}
+                  />
+                </div>
+                <Button onClick={saveAboutContent}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save About Content
                 </Button>
               </CardContent>
             </Card>

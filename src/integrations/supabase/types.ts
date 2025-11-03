@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_content: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           content: string | null
