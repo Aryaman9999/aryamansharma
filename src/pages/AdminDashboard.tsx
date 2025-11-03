@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { LogOut, Plus, Trash2, Save } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -760,21 +761,35 @@ const AdminDashboard = () => {
                 </div>
                 <div className="border-t pt-4 space-y-3">
                   <h3 className="font-medium">Add New Social Link</h3>
-                  <Input
-                    placeholder="Platform (e.g., LinkedIn, GitHub)"
-                    value={newSocialLink.platform}
-                    onChange={(e) => setNewSocialLink({ ...newSocialLink, platform: e.target.value })}
-                  />
-                  <Input
-                    placeholder="URL"
-                    value={newSocialLink.url}
-                    onChange={(e) => setNewSocialLink({ ...newSocialLink, url: e.target.value })}
-                  />
-                  <Input
-                    placeholder="Icon name (optional, e.g., Mail, Linkedin)"
-                    value={newSocialLink.icon}
-                    onChange={(e) => setNewSocialLink({ ...newSocialLink, icon: e.target.value })}
-                  />
+                  <div className="space-y-2">
+                    <Label>Platform</Label>
+                    <Select
+                      value={newSocialLink.platform}
+                      onValueChange={(value) => setNewSocialLink({ ...newSocialLink, platform: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select platform" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="linkedin">LinkedIn</SelectItem>
+                        <SelectItem value="github">GitHub</SelectItem>
+                        <SelectItem value="twitter">Twitter</SelectItem>
+                        <SelectItem value="instagram">Instagram</SelectItem>
+                        <SelectItem value="youtube">YouTube</SelectItem>
+                        <SelectItem value="facebook">Facebook</SelectItem>
+                        <SelectItem value="website">Website</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>URL</Label>
+                    <Input
+                      placeholder="https://..."
+                      value={newSocialLink.url}
+                      onChange={(e) => setNewSocialLink({ ...newSocialLink, url: e.target.value })}
+                    />
+                  </div>
                   <Button onClick={addSocialLink}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Social Link

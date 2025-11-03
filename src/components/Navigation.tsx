@@ -14,7 +14,7 @@ const Navigation = () => {
             onClick={() => scrollToSection('hero')}
             className="text-xl font-semibold text-foreground hover:text-primary transition-colors"
           >
-            Portfolio
+            Aryaman Sharma
           </button>
           <div className="hidden md:flex items-center gap-8">
             <button onClick={() => scrollToSection('work')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
