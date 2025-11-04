@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 const FeaturedWork = () => {
   const navigate = useNavigate();
@@ -49,8 +50,8 @@ const FeaturedWork = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-base mb-4">
-                  {project.description}
+                <CardDescription className="text-base mb-4 prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown>{project.description}</ReactMarkdown>
                 </CardDescription>
                 {project.content && (
                   <Button 

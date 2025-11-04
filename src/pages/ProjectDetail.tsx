@@ -86,9 +86,9 @@ const ProjectDetail = () => {
             ))}
           </div>
 
-          <p className="text-xl text-muted-foreground mb-8">
-            {project.description}
-          </p>
+          <div className="prose prose-lg dark:prose-invert max-w-none mb-8 text-muted-foreground">
+            <ReactMarkdown>{project.description}</ReactMarkdown>
+          </div>
 
           {project.content && (
             <div className="prose prose-lg dark:prose-invert max-w-none">

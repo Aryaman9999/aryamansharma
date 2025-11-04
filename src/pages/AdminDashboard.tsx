@@ -35,6 +35,8 @@ const AdminDashboard = () => {
   // Projects state
   const [projects, setProjects] = useState<any[]>([]);
   const [editingProject, setEditingProject] = useState<any>(null);
+  const [projectImageFile, setProjectImageFile] = useState<File | null>(null);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
 
   // Experiences state
   const [experiences, setExperiences] = useState<any[]>([]);
@@ -239,6 +241,34 @@ const AdminDashboard = () => {
     }
   };
 
+  const uploadProjectImage = async () => {
+    if (!projectImageFile) return null;
+
+    try {
+      const fileExt = projectImageFile.name.split('.').pop();
+      const fileName = `project-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('files')
+        .upload(filePath, projectImageFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('files')
+        .getPublicUrl(filePath);
+
+      setUploadedImageUrls([...uploadedImageUrls, publicUrl]);
+      toast.success("Image uploaded! URL copied below.");
+      setProjectImageFile(null);
+      return publicUrl;
+    } catch (error: any) {
+      toast.error(error.message);
+      return null;
+    }
+  };
+
   const saveProject = async () => {
     if (!editingProject) return;
     try {
@@ -254,6 +284,7 @@ const AdminDashboard = () => {
       }
       toast.success("Project saved");
       setEditingProject(null);
+      setUploadedImageUrls([]);
       loadAllContent();
     } catch (error: any) {
       toast.error(error.message);
@@ -648,12 +679,15 @@ const AdminDashboard = () => {
                       value={editingProject.title}
                       onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
                     />
-                    <Textarea
-                      placeholder="Project description"
-                      value={editingProject.description}
-                      onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
-                      rows={4}
-                    />
+                    <div className="space-y-2">
+                      <Label>Project Description (Markdown supported)</Label>
+                      <Textarea
+                        placeholder="Short description with markdown support (## Heading, **bold**, etc.)"
+                        value={editingProject.description}
+                        onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
+                        rows={4}
+                      />
+                    </div>
                     <Input
                       placeholder="Tags (comma-separated)"
                       value={editingProject.tags?.join(", ") || ""}
@@ -665,16 +699,58 @@ const AdminDashboard = () => {
                       onChange={(e) => setEditingProject({ ...editingProject, image_url: e.target.value })}
                     />
                     <div className="space-y-2">
+                      <Label>Upload Images for Markdown</Label>
+                      <div className="flex gap-2 items-end">
+                        <div className="flex-1">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setProjectImageFile(e.target.files?.[0] || null)}
+                          />
+                        </div>
+                        <Button 
+                          type="button"
+                          onClick={uploadProjectImage}
+                          disabled={!projectImageFile}
+                          variant="secondary"
+                        >
+                          Upload Image
+                        </Button>
+                      </div>
+                      {uploadedImageUrls.length > 0 && (
+                        <div className="space-y-2 p-3 bg-muted rounded-md">
+                          <p className="text-xs font-medium">Uploaded Image URLs (copy & paste into markdown):</p>
+                          {uploadedImageUrls.map((url, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <code className="text-xs bg-background p-2 rounded flex-1 overflow-x-auto">
+                                ![image]({url})
+                              </code>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`![image](${url})`);
+                                  toast.success("Copied to clipboard!");
+                                }}
+                              >
+                                Copy
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
                       <Label>Project Content (Markdown)</Label>
                       <Textarea
-                        placeholder="Write your project details in markdown format...&#10;&#10;## Overview&#10;This project...&#10;&#10;## Features&#10;- Feature 1&#10;- Feature 2"
+                        placeholder="Write your project details in markdown format...&#10;&#10;## Overview&#10;This project...&#10;&#10;## Features&#10;- Feature 1&#10;- Feature 2&#10;&#10;## Images&#10;![Alt text](image-url-here)"
                         value={editingProject.content || ""}
                         onChange={(e) => setEditingProject({ ...editingProject, content: e.target.value })}
                         rows={15}
                         className="font-mono text-sm"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Use markdown formatting. Leave blank to use external case study URL instead.
+                        Use markdown formatting. Upload images above and paste the URLs. Leave blank to use external case study URL instead.
                       </p>
                     </div>
                     <Input
