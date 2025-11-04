@@ -15,6 +15,8 @@ import { Switch } from "@/components/ui/switch";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeUrl, setResumeUrl] = useState<string>("");
 
   // Hero content state
   const [heroContent, setHeroContent] = useState({
@@ -96,6 +98,14 @@ const AdminDashboard = () => {
         .maybeSingle();
       if (heroData) setHeroContent(heroData);
 
+      // Load resume URL from site settings
+      const { data: resumeSetting } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "resume_url")
+        .maybeSingle();
+      if (resumeSetting) setResumeUrl(resumeSetting.value);
+
       const { data: companiesData } = await supabase
         .from("companies")
         .select("*")
@@ -153,6 +163,35 @@ const AdminDashboard = () => {
 
   const saveHeroContent = async () => {
     try {
+      // Upload resume file if selected
+      if (resumeFile) {
+        const fileExt = resumeFile.name.split('.').pop();
+        const fileName = `resume-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('files')
+          .upload(fileName, resumeFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('files')
+          .getPublicUrl(fileName);
+
+        // Save resume URL to site settings
+        const { error: settingsError } = await supabase
+          .from('site_settings')
+          .upsert({
+            key: 'resume_url',
+            value: publicUrl
+          }, { onConflict: 'key' });
+
+        if (settingsError) throw settingsError;
+        
+        setResumeUrl(publicUrl);
+        setResumeFile(null);
+      }
+
       const { error } = await supabase
         .from("hero_content")
         .update({
@@ -428,6 +467,22 @@ const AdminDashboard = () => {
                     placeholder="https://..."
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Resume File</Label>
+                  <Input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                  />
+                  {resumeUrl && (
+                    <p className="text-sm text-muted-foreground">
+                      Current resume: <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">View</a>
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Upload a PDF or DOC file for the download resume button
+                  </p>
+                </div>
                 <Button onClick={saveHeroContent}>
                   <Save className="w-4 h-4 mr-2" />
                   Save Hero Content
@@ -609,8 +664,21 @@ const AdminDashboard = () => {
                       value={editingProject.image_url || ""}
                       onChange={(e) => setEditingProject({ ...editingProject, image_url: e.target.value })}
                     />
+                    <div className="space-y-2">
+                      <Label>Project Content (Markdown)</Label>
+                      <Textarea
+                        placeholder="Write your project details in markdown format...&#10;&#10;## Overview&#10;This project...&#10;&#10;## Features&#10;- Feature 1&#10;- Feature 2"
+                        value={editingProject.content || ""}
+                        onChange={(e) => setEditingProject({ ...editingProject, content: e.target.value })}
+                        rows={15}
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Use markdown formatting. Leave blank to use external case study URL instead.
+                      </p>
+                    </div>
                     <Input
-                      placeholder="Case study URL"
+                      placeholder="External Case Study URL (optional if content is provided)"
                       value={editingProject.case_study_url || ""}
                       onChange={(e) => setEditingProject({ ...editingProject, case_study_url: e.target.value })}
                     />

@@ -194,6 +194,7 @@ export type Database = {
       projects: {
         Row: {
           case_study_url: string | null
+          content: string | null
           created_at: string | null
           description: string
           display_order: number
@@ -205,6 +206,7 @@ export type Database = {
         }
         Insert: {
           case_study_url?: string | null
+          content?: string | null
           created_at?: string | null
           description: string
           display_order?: number
@@ -216,6 +218,7 @@ export type Database = {
         }
         Update: {
           case_study_url?: string | null
+          content?: string | null
           created_at?: string | null
           description?: string
           display_order?: number

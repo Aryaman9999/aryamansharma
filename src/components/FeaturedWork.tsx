@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 const FeaturedWork = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
 
   useEffect(() => {
@@ -50,7 +52,16 @@ const FeaturedWork = () => {
                 <CardDescription className="text-base mb-4">
                   {project.description}
                 </CardDescription>
-                {project.case_study_url && (
+                {project.content && (
+                  <Button 
+                    variant="ghost" 
+                    className="gap-2 px-0 hover:gap-3 transition-all"
+                    onClick={() => navigate(`/project/${project.id}`)}
+                  >
+                    View Details <ArrowRight className="w-4 h-4" />
+                  </Button>
+                )}
+                {!project.content && project.case_study_url && (
                   <Button 
                     variant="ghost" 
                     className="gap-2 px-0 hover:gap-3 transition-all"

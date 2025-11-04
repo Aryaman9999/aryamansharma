@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 
 const Hero = () => {
   const [content, setContent] = useState({
@@ -11,6 +11,7 @@ const Hero = () => {
     button_secondary_text: "About Me",
     image_url: ""
   });
+  const [resumeUrl, setResumeUrl] = useState<string>("");
 
   useEffect(() => {
     loadContent();
@@ -23,6 +24,13 @@ const Hero = () => {
       .limit(1)
       .maybeSingle();
     if (data) setContent(data);
+
+    const { data: resumeSetting } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "resume_url")
+      .maybeSingle();
+    if (resumeSetting) setResumeUrl(resumeSetting.value);
   };
 
   const scrollToSection = (id: string) => {
@@ -59,6 +67,17 @@ const Hero = () => {
               <Button onClick={() => scrollToSection('about')} variant="outline" size="lg">
                 {content.button_secondary_text}
               </Button>
+              {resumeUrl && (
+                <Button 
+                  onClick={() => window.open(resumeUrl, '_blank')} 
+                  variant="outline" 
+                  size="lg"
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download Resume
+                </Button>
+              )}
             </div>
           </div>
           <div className="flex-shrink-0 fade-in">
