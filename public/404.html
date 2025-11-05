@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+      // Get the path from the URL, like /aryamansharma/admin-login
+      var path = location.pathname;
+
+      // Get the repo name, which is your base path
+      var repo = '/aryamansharma/';
+
+      // Check if the path starts with the repo name
+      if (path.startsWith(repo)) {
+        // Get the actual route, like /admin-login
+        var route = path.substring(repo.length);
+        
+        // Reconstruct the URL with a hash (#)
+        // This tells HashRouter what to load
+        location.replace(location.origin + repo + '#/' + route);
+      }
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
