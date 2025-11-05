@@ -675,7 +675,7 @@ const AdminDashboard = () => {
                         </div>
                       ))}
                     </div>
-                    <Button onClick={() => setEditingProject({ title: "", description: "", tags: [], image_url: "", case_study_url: "", display_order: 0 })}>
+                    <Button onClick={() => setEditingProject({ title: "", description: "", tags: [], image_url: "", case_study_url: "", display_order: 0, github_url: "", live_demo_url: "" })}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Project
                     </Button>
@@ -765,6 +765,16 @@ const AdminDashboard = () => {
                       placeholder="External Case Study URL (optional if content is provided)"
                       value={editingProject.case_study_url || ""}
                       onChange={(e) => setEditingProject({ ...editingProject, case_study_url: e.target.value })}
+                    />
+                    <Input
+                    placeholder="GitHub URL (e.g., https://github.com/...)"
+                    value={editingProject.github_url || ""}
+                    onChange={(e) => setEditingProject({ ...editingProject, github_url: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Live Demo URL (e.g., https://...)"
+                      value={editingProject.live_demo_url || ""}
+                      onChange={(e) => setEditingProject({ ...editingProject, live_demo_url: e.target.value })}
                     />
                     <Input
                       type="number"

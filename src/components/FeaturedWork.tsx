@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-
+import { Github, Globe } from "lucide-react";
 const FeaturedWork = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
@@ -40,8 +40,40 @@ const FeaturedWork = () => {
                     <span className="text-sm">{project.title}</span>
                   )}
                 </div>
-                <CardTitle className="text-xl mb-2">{project.title}</CardTitle>
-                <div className="flex flex-wrap gap-2 mb-3">
+
+                {/* --- THIS IS THE UPDATED BLOCK --- */}
+                <div className="flex justify-between items-center pt-2">
+                  <CardTitle className="text-xl">{project.title}</CardTitle>
+                  <div className="flex gap-3">
+                    {/* Conditionally renders GitHub icon link */}
+                    {project.github_url && (
+                      <a 
+                        href={project.github_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        title="View Code on GitHub"
+                        onClick={(e) => e.stopPropagation()} // Prevents card from navigating
+                      >
+                        <Github className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                      </a>
+                    )}
+                    {/* Conditionally renders Live Demo icon link */}
+                    {project.live_demo_url && (
+                      <a 
+                        href={project.live_demo_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        title="View Live Demo"
+                        onClick={(e) => e.stopPropagation()} // Prevents card from navigating
+                      >
+                        <Globe className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+                {/* --- END OF UPDATED BLOCK --- */}
+
+                <div className="flex flex-wrap gap-2 mb-3 pt-1">
                   {project.tags?.map((tag: string) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
                       {tag}
@@ -66,7 +98,10 @@ const FeaturedWork = () => {
                   <Button 
                     variant="ghost" 
                     className="gap-2 px-0 hover:gap-3 transition-all"
-                    onClick={() => window.open(project.case_study_url, '_blank')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(project.case_study_url, '_blank');
+                    }}
                   >
                     View Case Study <ArrowRight className="w-4 h-4" />
                   </Button>
