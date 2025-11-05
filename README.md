@@ -1,73 +1,34 @@
-# Welcome to your Lovable project
+# Aryaman Sharma - Personal Portfolio & CMS
 
-## Project info
+This is the source code for my personal portfolio, a fully dynamic React application powered by a Supabase backend and a custom-built content management system (CMS).
 
-**URL**: https://lovable.dev/projects/fae1b12f-51ed-46cf-87ce-71349601bfba
+**Visit the live site: [https://aryaman9999.github.io/aryamansharma/](https://aryaman9999.github.io/aryamansharma/)**
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🚀 Key Features
 
-**Use Lovable**
+This project is more than a static site. It's a full-stack application with a decoupled architecture.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fae1b12f-51ed-46cf-87ce-71349601bfba) and start prompting.
+* **Full Custom CMS:** A secure, password-protected admin dashboard built from scratch with React.
+* **Dynamic Content Management:** All site content—including the Hero section, About page, Projects, Career Experience, and Blog—is fetched from a PostgreSQL database and can be edited live from the admin panel.
+* **Secure Role-Based Auth:** The project uses Supabase Row Level Security (RLS) and a custom `user_roles` table to ensure that only authenticated users with the `admin` role can access the dashboard or modify content.
+* **File Storage Integration:** The admin dashboard supports uploading files (like resumes and project images) directly to Supabase Storage. The public URLs are then saved to the database.
+* **Modern Frontend:** Built with React, Vite, and TypeScript for a fast, type-safe development experience.
+* **Beautifully Styled:** Uses Tailwind CSS and shadcn/ui for a clean, responsive, and modern design.
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠 Tech Stack
 
-**Use your preferred IDE**
+* **Frontend:** React, Vite, TypeScript, React Router, Tailwind CSS, shadcn/ui.
+* **Backend:** Supabase (PostgreSQL, Auth, Storage).
+* **Deployment:**
+    * Frontend: **GitHub Pages** (deployed automatically via GitHub Actions).
+    * Backend: **Supabase** (self-hosted on the free tier).
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🏛 Project Architecture
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+This portfolio operates on a decoupled architecture:
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/fae1b12f-51ed-46cf-87ce-71349601bfba) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+1.  **Frontend (GitHub Pages):** A static build of the React application is hosted on GitHub Pages. This makes it fast and free to serve.
+2.  **Backend (Supabase):** When a user visits the site, the React app makes API calls to the self-hosted Supabase project to fetch all dynamic content.
+3.  **Admin Panel:** When I navigate to the `/admin-login` route, the React app provides a login form. On successful login, it uses a secure token to fetch and send data to the Supabase backend, allowing me to manage all site content.
