@@ -5,9 +5,11 @@ import { Download } from "lucide-react";
 
 const Career = () => {
   const [experiences, setExperiences] = useState<any[]>([]);
+  const [resumeUrl, setResumeUrl] = useState<string>("");
 
   useEffect(() => {
     loadExperiences();
+    loadResumeUrl();
   }, []);
 
   const loadExperiences = async () => {
@@ -16,6 +18,15 @@ const Career = () => {
       .select("*")
       .order("display_order");
     if (data) setExperiences(data);
+  };
+
+  const loadResumeUrl = async () => {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "resume_url")
+      .maybeSingle();
+    if (data) setResumeUrl(data.value);
   };
 
   return (
@@ -45,12 +56,18 @@ const Career = () => {
             </div>
           ))}
         </div>
-        <div className="flex justify-center">
-          <Button size="lg" className="gap-2">
-            <Download className="w-4 h-4" />
-            Download My Full Resume
-          </Button>
-        </div>
+        {resumeUrl && (
+          <div className="flex justify-center">
+            <Button 
+              onClick={() => window.open(resumeUrl, '_blank')} 
+              size="lg" 
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download My Full Resume
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
