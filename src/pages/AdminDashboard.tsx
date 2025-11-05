@@ -181,12 +181,20 @@ const AdminDashboard = () => {
           .getPublicUrl(fileName);
 
         // Save resume URL to site settings
-        const { error: settingsError } = await supabase
+        const { data: existingSetting } = await supabase
           .from('site_settings')
-          .upsert({
-            key: 'resume_url',
-            value: publicUrl
-          }, { onConflict: 'key' });
+          .select('id')
+          .eq('key', 'resume_url')
+          .maybeSingle();
+
+        const { error: settingsError } = existingSetting
+          ? await supabase
+              .from('site_settings')
+              .update({ value: publicUrl })
+              .eq('key', 'resume_url')
+          : await supabase
+              .from('site_settings')
+              .insert({ key: 'resume_url', value: publicUrl });
 
         if (settingsError) throw settingsError;
         
