@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import ReactMarkdown from "react-markdown"
 const Career = () => {
   const [experiences, setExperiences] = useState<any[]>([]);
   const [resumeUrl, setResumeUrl] = useState<string>("");
@@ -35,27 +36,37 @@ const Career = () => {
         <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-12 text-center">
           Career & Experience
         </h2>
-        <div className="space-y-6 mb-12">
-          {experiences.map((exp) => (
-            <div
-              key={exp.id}
-              className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-card rounded-lg border border-border hover:shadow-soft transition-shadow"
-            >
-              <div>
-                <h3 className="text-xl font-semibold text-foreground mb-1">
-                  {exp.company}
-                </h3>
-                <p className="text-muted-foreground mb-2">{exp.role}</p>
-                <span className="inline-block px-3 py-1 text-xs font-medium bg-accent text-accent-foreground rounded-full">
-                  {exp.status}
-                </span>
-              </div>
-              <div className="text-muted-foreground mt-4 md:mt-0">
-                {exp.period}
-              </div>
-            </div>
-          ))}
+        <Accordion type="single" collapsible className="w-full space-y-4 mb-12">
+  {experiences.map((exp) => (
+    <AccordionItem key={exp.id} value={exp.id} className="bg-card rounded-lg border border-border hover:shadow-soft transition-shadow">
+      
+      {/* This is the part you click */}
+      <AccordionTrigger className="flex justify-between items-center w-full p-6 font-semibold text-left">
+        <div className="flex-1 text-left">
+          <h3 className="text-xl font-semibold text-foreground mb-1">{exp.company}</h3>
+          <p className="text-muted-foreground font-normal">{exp.role}</p>
         </div>
+        <div className="text-muted-foreground font-normal ml-4 hidden md:block">
+          {exp.period}
+        </div>
+      </AccordionTrigger>
+
+      {/* This is the hidden content */}
+      <AccordionContent className="p-6 pt-0">
+        <div className="text-muted-foreground space-y-2 prose prose-sm dark:prose-invert">
+          {/* This will render your bullet points as a list */}
+          <ReactMarkdown>
+            {exp.contributions}
+          </ReactMarkdown>
+        </div>
+        <div className="text-muted-foreground font-normal mt-4 md:hidden">
+          {exp.period}
+        </div>
+      </AccordionContent>
+
+    </AccordionItem>
+  ))}
+</Accordion>
         {resumeUrl && (
           <div className="flex justify-center">
             <Button 

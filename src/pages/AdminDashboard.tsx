@@ -851,12 +851,19 @@ const AdminDashboard = () => {
                       value={editingExperience.period}
                       onChange={(e) => setEditingExperience({ ...editingExperience, period: e.target.value })}
                     />
+                    <Textarea
+                      placeholder="Contributions (use * for bullet points)..."
+                      value={editingExperience.contributions || ""}
+                      onChange={(e) => setEditingExperience({ ...editingExperience, contributions: e.target.value })}
+                      rows={4}
+                    />
                     <Input
                       type="number"
                       placeholder="Display order"
                       value={editingExperience.display_order}
                       onChange={(e) => setEditingExperience({ ...editingExperience, display_order: parseInt(e.target.value) || 0 })}
                     />
+
                     <div className="flex gap-2">
                       <Button onClick={saveExperience}>
                         <Save className="w-4 h-4 mr-2" />
