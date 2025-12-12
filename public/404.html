@@ -4,20 +4,28 @@
     <meta charset="utf-8">
     <title>Redirecting...</title>
     <script>
-      // Get the path from the URL, like /aryamansharma/admin-login
+      // Get the path from the URL, e.g., /admin-login
       var path = location.pathname;
 
-      // Get the repo name, which is your base path
-      var repo = '/aryamansharma/';
+      // CHANGE THIS: Since you are on a custom domain, your root is just '/'
+      // (Old value was '/aryamansharma/')
+      var repo = '/'; 
 
-      // Check if the path starts with the repo name
-      if (path.startsWith(repo)) {
-        // Get the actual route, like /admin-login
-        var route = path.substring(repo.length);
+      // This check handles cases where the user is already at the root
+      if (path && path !== repo) {
         
-        // Reconstruct the URL with a hash (#)
-        // This tells HashRouter what to load
-        location.replace(location.origin + repo + '#/' + route);
+        // Remove the leading slash if logic requires, or just handle the hash construction
+        // For a root domain, we usually just want to turn /admin-login into /#/admin-login
+        
+        var route = path; 
+        
+        // If the path starts with '/', purely cosmetic clean up (optional but safe)
+        if(route.startsWith('/')) {
+            route = route.substring(1);
+        }
+
+        // Redirect to the hash version
+        location.replace(location.origin + '/#/' + route);
       }
     </script>
   </head>
