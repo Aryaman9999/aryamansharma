@@ -5,7 +5,6 @@ import FeaturedWork from "@/components/FeaturedWork";
 import About from "@/components/About";
 import Career from "@/components/Career";
 import Blog from "@/components/Blog";
-import LinkedInBadge from "@/components/LinkedInBadge"; // <-- 1. IMPORT IT
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 
@@ -19,7 +18,6 @@ const Index = () => {
       <About />
       <Career />
       <Blog />
-      <LinkedInBadge /> {/* <-- 2. ADD IT HERE */}
       <Contact />
       <Footer />
     </div>
