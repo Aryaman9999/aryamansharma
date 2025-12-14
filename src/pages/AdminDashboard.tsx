@@ -37,6 +37,8 @@ const AdminDashboard = () => {
   const [editingProject, setEditingProject] = useState<any>(null);
   const [projectImageFile, setProjectImageFile] = useState<File | null>(null);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
+  const [uploadedBlogImageUrls, setUploadedBlogImageUrls] = useState<string[]>([]);
 
   // Experiences state
   const [experiences, setExperiences] = useState<any[]>([]);
@@ -270,6 +272,36 @@ const AdminDashboard = () => {
       setUploadedImageUrls([...uploadedImageUrls, publicUrl]);
       toast.success("Image uploaded! URL copied below.");
       setProjectImageFile(null);
+      return publicUrl;
+    } catch (error: any) {
+      toast.error(error.message);
+      return null;
+    }
+  };
+
+  const uploadBlogImage = async () => {
+    if (!blogImageFile) return null;
+
+    try {
+      const fileExt = blogImageFile.name.split('.').pop();
+      const fileName = `blog-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('files')
+        .upload(filePath, blogImageFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('files')
+        .getPublicUrl(filePath);
+
+      setUploadedBlogImageUrls([...uploadedBlogImageUrls, publicUrl]);
+      // If currently editing a blog, set its image_url to the uploaded public URL
+      if (editingBlog) setEditingBlog({ ...editingBlog, image_url: publicUrl });
+      toast.success("Image uploaded! URL copied below.");
+      setBlogImageFile(null);
       return publicUrl;
     } catch (error: any) {
       toast.error(error.message);
@@ -966,6 +998,56 @@ const AdminDashboard = () => {
                         onCheckedChange={(checked) => setEditingBlog({ ...editingBlog, published: checked })}
                       />
                       <Label>Published</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Image URL (optional)</Label>
+                      <Input
+                        placeholder="https://..."
+                        value={editingBlog.image_url || ""}
+                        onChange={(e) => setEditingBlog({ ...editingBlog, image_url: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Upload Images for Markdown / Feature</Label>
+                      <div className="flex gap-2 items-end">
+                        <div className="flex-1">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setBlogImageFile(e.target.files?.[0] || null)}
+                          />
+                        </div>
+                        <Button 
+                          type="button"
+                          onClick={uploadBlogImage}
+                          disabled={!blogImageFile}
+                          variant="secondary"
+                        >
+                          Upload Image
+                        </Button>
+                      </div>
+                      {uploadedBlogImageUrls.length > 0 && (
+                        <div className="space-y-2 p-3 bg-muted rounded-md">
+                          <p className="text-xs font-medium">Uploaded Image URLs (copy & paste into markdown or use as image_url):</p>
+                          {uploadedBlogImageUrls.map((url, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <code className="text-xs bg-background p-2 rounded flex-1 overflow-x-auto">
+                                ![image]({url})
+                              </code>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`![image](${url})`);
+                                  toast.success("Copied to clipboard!");
+                                }}
+                              >
+                                Copy
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <Input
                       type="number"

@@ -35,6 +35,14 @@ const Blog = () => {
               onClick={() => navigate(`/blog/${article.id}`)}
             >
               <CardHeader>
+                <div className="w-full h-48 bg-accent rounded-md mb-4 flex items-center justify-center text-muted-foreground overflow-hidden">
+                  {article.image_url ? (
+                    <img src={article.image_url} alt={article.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm">{article.title}</span>
+                  )}
+                </div>
+
                 <CardTitle className="text-lg mb-2">{article.title}</CardTitle>
                 <span className="text-xs text-muted-foreground">{article.read_time}</span>
               </CardHeader>
