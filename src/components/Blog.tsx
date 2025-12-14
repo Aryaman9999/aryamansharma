@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,8 +50,8 @@ const Blog = () => {
                 <span className="text-xs text-muted-foreground">{article.read_time}</span>
               </CardHeader>
               <CardContent>
-                <CardDescription className="mb-4">
-                  {article.description}
+                <CardDescription className="mb-4 prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{article.description || ""}</ReactMarkdown>
                 </CardDescription>
                 <div className="flex items-center gap-2 text-primary hover:gap-3 transition-all">
                   <span className="text-sm font-medium">Read More</span>
