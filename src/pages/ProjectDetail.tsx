@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -87,12 +89,12 @@ const ProjectDetail = () => {
           </div>
 
           <div className="prose prose-lg dark:prose-invert max-w-none mb-8 text-muted-foreground">
-            <ReactMarkdown>{project.description}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{project.description}</ReactMarkdown>
           </div>
 
           {project.content && (
             <div className="prose prose-lg dark:prose-invert max-w-none">
-              <ReactMarkdown>{project.content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{project.content}</ReactMarkdown>
             </div>
           )}
         </div>
