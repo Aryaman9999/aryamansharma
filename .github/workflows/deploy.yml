@@ -25,6 +25,10 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
+        env:
+          # Make sure these names match what you used in your React code
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
