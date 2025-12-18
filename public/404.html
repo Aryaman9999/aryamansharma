@@ -1,34 +1,34 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <meta charset="utf-8">
-    <title>Redirecting...</title>
-    <script>
-      // Get the path from the URL, e.g., /admin-login
-      var path = location.pathname;
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <title>Aryaman Sharma | Electronics Engineer & AI Portfolio</title>
+    
+    <meta name="description" content="Portfolio of Aryaman Sharma, an Electronics Engineer bridging Machine Learning and Semiconductor Design. IEEE EPICS project lead and incoming Cadence intern." />
+    <meta name="author" content="Aryaman Sharma" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-      // CHANGE THIS: Since you are on a custom domain, your root is just '/'
-      // (Old value was '/aryamansharma/')
-      var repo = '/'; 
+    <meta property="og:title" content="Aryaman Sharma | Electronics Engineer & AI Portfolio" />
+    <meta property="og:description" content="Portfolio of an Electronics Engineer bridging Machine Learning and Semiconductor Design. View my projects and experience." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aryamansharma.space/" />
+    <meta property="og:image" content="https://aryamansharma.space/og-image.png" />
 
-      // This check handles cases where the user is already at the root
-      if (path && path !== repo) {
-        
-        // Remove the leading slash if logic requires, or just handle the hash construction
-        // For a root domain, we usually just want to turn /admin-login into /#/admin-login
-        
-        var route = path; 
-        
-        // If the path starts with '/', purely cosmetic clean up (optional but safe)
-        if(route.startsWith('/')) {
-            route = route.substring(1);
-        }
-
-        // Redirect to the hash version
-        location.replace(location.origin + '/#/' + route);
-      }
-    </script>
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Aryaman Sharma | Electronics Engineer" />
+    <meta name="twitter:description" content="Electronics Engineer bridging Machine Learning and Semiconductor Design." />
+    <meta name="twitter:image" content="https://aryamansharma.space/og-image.png" />
   </head>
+
   <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

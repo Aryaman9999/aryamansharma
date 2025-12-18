@@ -86,7 +86,7 @@ const Hero = () => {
                 <img src={content.image_url} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  <span className="text-sm">Professional Headshot</span>
+                  <span className="text-sm">Aryaman</span>
                 </div>
               )}
             </div>
