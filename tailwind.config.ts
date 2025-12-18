@@ -64,6 +64,7 @@ export default {
       boxShadow: {
         'soft': '0 2px 8px hsl(var(--shadow-soft))',
         'soft-lg': '0 4px 16px hsl(var(--shadow-soft))',
+        'golden': '0 0 20px rgba(168, 85, 247, 0.6), 0 0 40px rgba(168, 85, 247, 0.3)',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -87,10 +88,22 @@ export default {
             height: "0",
           },
         },
+        "button-shine": {
+          "0%": {
+            backgroundPosition: "200% center",
+          },
+          "50%": {
+            backgroundPosition: "-200% center",
+          },
+          "100%": {
+            backgroundPosition: "200% center",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "button-shine": "button-shine 3s ease-in-out infinite",
       },
     },
   },

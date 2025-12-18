@@ -26,7 +26,7 @@ const SocialProof = () => {
               className="text-muted-foreground hover:text-foreground transition-colors text-xl font-semibold"
             >
               {company.logo_url ? (
-                <img src={company.logo_url} alt={company.name} className="h-12 object-contain" />
+                <img src={company.logo_url} alt={company.name} className="h-16 object-contain" />
               ) : (
                 company.name
               )}
