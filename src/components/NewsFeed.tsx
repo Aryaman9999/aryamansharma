@@ -31,12 +31,47 @@ const NewsFeed = () => {
     try {
       setLoading(true);
       setError(false);
+      // Increased fetch limit to 60 to ensure we have enough items after strict filtering
       const response = await fetch(
-        `https://dev.to/api/articles?tag=ai&per_page=15&state=rising`
+        `https://dev.to/api/articles?tag=ai&per_page=60&state=rising`
       );
       if (!response.ok) throw new Error("Failed to fetch articles");
       const data = await response.json();
-      setArticles(data);
+      
+      // Strict whitelist based on user preferences
+      // Note: 'ai' is excluded from this check to ensure we filter for specific relevance
+      // beyond just the base tag.
+      const allowedInterests = [
+        "programming", "chatgpt", "llm", "opensource", "devops", 
+        "tooling", "webdev", "rag", "tech", "automation", "tool", "tools",
+        // Including variations/synonyms of the user's requested tags for robustness
+        "gpt", "machine learning", "deep learning", "generative ai"
+      ];
+
+      const validArticles = data.filter((article: Article) => {
+        const title = article.title.toLowerCase();
+        const tags = article.tag_list.map(t => t.toLowerCase());
+        
+        // 1. Filter out Challenges/Hackathons
+        const isChallenge = 
+          title.includes('challenge') || 
+          tags.includes('challenge') ||
+          tags.includes('hackathon') ||
+          /day\s*\d+/.test(title);
+
+        if (isChallenge) return false;
+
+        // 2. Strict Relevance Filter
+        // The article must have 'ai' (guaranteed by fetch) AND at least one other tag
+        // from the allowedInterests list. This removes generic "AI + [Random Platform]" articles.
+        // We also keep articles that are ONLY tagged with 'ai' (length 1) as they are likely pure AI news.
+        const hasRelevantTag = tags.some(t => allowedInterests.includes(t));
+        const isPureAI = tags.length === 1 && tags[0] === 'ai';
+
+        return hasRelevantTag || isPureAI;
+      }).slice(0, 15);
+
+      setArticles(validArticles);
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch news:", err);
@@ -61,8 +96,8 @@ const NewsFeed = () => {
               <Bot className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight">Curated News Articles</h2>
-              <p className="text-sm text-muted-foreground">Trending discussions in artificial intelligence, robotics and more</p>
+              <h2 className="text-2xl font-bold tracking-tight">AI & Machine Learning</h2>
+              <p className="text-sm text-muted-foreground">Trending discussions in artificial intelligence</p>
             </div>
           </div>
           <div className="hidden text-sm font-medium sm:flex text-muted-foreground items-center gap-1 animate-pulse">
