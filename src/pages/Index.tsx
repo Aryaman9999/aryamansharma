@@ -5,6 +5,7 @@ import FeaturedWork from "@/components/FeaturedWork";
 import About from "@/components/About";
 import Career from "@/components/Career";
 import Blog from "@/components/Blog";
+import NewsFeed from "@/components/NewsFeed";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 
@@ -18,7 +19,7 @@ const Index = () => {
       <About />
       <Career />
       <Blog />
-     
+      <NewsFeed />
       <Contact />
       <Footer />
     </div>
