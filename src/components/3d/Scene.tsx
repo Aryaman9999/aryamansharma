@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback, memo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { PerspectiveCamera } from '@react-three/drei';
 import { SiliconChip } from './SiliconChip';
@@ -9,29 +9,43 @@ interface SceneProps {
     isHero?: boolean;
 }
 
-// Main scene content
-const SceneContent = ({ showChip = true }: SceneProps) => {
+// Throttle function to limit updates
+const throttle = <T extends (...args: any[]) => void>(func: T, limit: number) => {
+    let lastFunc: ReturnType<typeof setTimeout>;
+    let lastRan: number;
+    return (...args: Parameters<T>) => {
+        if (!lastRan) {
+            func(...args);
+            lastRan = Date.now();
+        } else {
+            clearTimeout(lastFunc);
+            lastFunc = setTimeout(() => {
+                if ((Date.now() - lastRan) >= limit) {
+                    func(...args);
+                    lastRan = Date.now();
+                }
+            }, limit - (Date.now() - lastRan));
+        }
+    };
+};
+
+// Main scene content - optimized with throttled updates
+const SceneContent = memo(({ showChip = true }: SceneProps) => {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-    const [scrollY, setScrollY] = useState(0);
 
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
+        // Throttle mouse updates to 30fps
+        const handleMouseMove = throttle((e: MouseEvent) => {
             setMousePosition({
                 x: (e.clientX / window.innerWidth) * 2 - 1,
                 y: -(e.clientY / window.innerHeight) * 2 + 1
             });
-        };
+        }, 33);
 
-        const handleScroll = () => {
-            setScrollY(window.scrollY);
-        };
-
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('scroll', handleScroll);
         };
     }, []);
 
@@ -40,7 +54,7 @@ const SceneContent = ({ showChip = true }: SceneProps) => {
             <PerspectiveCamera makeDefault position={[0, 2, 8]} fov={50} />
 
             {/* Background elements */}
-            <BackgroundGrid scrollY={scrollY} />
+            <BackgroundGrid />
 
             {/* Main silicon chip */}
             {showChip && (
@@ -49,47 +63,42 @@ const SceneContent = ({ showChip = true }: SceneProps) => {
                 </group>
             )}
 
-            {/* Lighting */}
+            {/* Simplified lighting */}
             <ambientLight intensity={0.4} />
-            <directionalLight position={[5, 5, 5]} intensity={0.8} color="#ffffff" />
-            <pointLight position={[-5, 5, -5]} intensity={0.5} color="#6366f1" />
-            <pointLight position={[5, -5, 5]} intensity={0.3} color="#06b6d4" />
+            <directionalLight position={[5, 5, 5]} intensity={0.6} color="#ffffff" />
+            <pointLight position={[-5, 5, -5]} intensity={0.4} color="#6366f1" />
         </>
     );
-};
+});
 
-// Background-only scene for full-page background
-const BackgroundSceneContent = () => {
-    const [scrollY, setScrollY] = useState(0);
+SceneContent.displayName = 'SceneContent';
 
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrollY(window.scrollY);
-        };
-
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
+// Background-only scene - simplified, no scroll tracking
+const BackgroundSceneContent = memo(() => {
     return (
         <>
             <PerspectiveCamera makeDefault position={[0, 0, 15]} fov={60} />
-            <BackgroundGrid scrollY={scrollY} />
-            <ambientLight intensity={0.2} />
+            <BackgroundGrid />
+            <ambientLight intensity={0.15} />
         </>
     );
-};
+});
+
+BackgroundSceneContent.displayName = 'BackgroundSceneContent';
 
 // Hero Scene with the silicon chip
-export const HeroScene = () => {
+export const HeroScene = memo(() => {
     return (
         <div className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }}>
             <Canvas
                 gl={{
-                    antialias: true,
+                    antialias: false, // Disable for performance
                     alpha: true,
-                    powerPreference: 'high-performance'
+                    powerPreference: 'high-performance',
+                    failIfMajorPerformanceCaveat: true, // Don't render on very weak GPUs
                 }}
+                dpr={[1, 1.5]} // Limit pixel ratio for performance
+                frameloop="demand" // Only render when needed
                 style={{ background: 'transparent' }}
             >
                 <Suspense fallback={null}>
@@ -98,10 +107,12 @@ export const HeroScene = () => {
             </Canvas>
         </div>
     );
-};
+});
 
-// Full-page background scene
-export const BackgroundScene = () => {
+HeroScene.displayName = 'HeroScene';
+
+// Full-page background scene - heavily optimized
+export const BackgroundScene = memo(() => {
     return (
         <div
             className="fixed inset-0 w-full h-full pointer-events-none"
@@ -109,10 +120,13 @@ export const BackgroundScene = () => {
         >
             <Canvas
                 gl={{
-                    antialias: true,
+                    antialias: false, // Disable for performance
                     alpha: true,
-                    powerPreference: 'high-performance'
+                    powerPreference: 'high-performance',
+                    failIfMajorPerformanceCaveat: true,
                 }}
+                dpr={[1, 1.5]} // Limit pixel ratio
+                frameloop="always" // Background needs continuous updates for particles
                 style={{ background: 'transparent' }}
             >
                 <Suspense fallback={null}>
@@ -121,6 +135,8 @@ export const BackgroundScene = () => {
             </Canvas>
         </div>
     );
-};
+});
+
+BackgroundScene.displayName = 'BackgroundScene';
 
 export default HeroScene;

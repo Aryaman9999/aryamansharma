@@ -1,20 +1,52 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
-import SocialProof from "@/components/SocialProof";
-import FeaturedWork from "@/components/FeaturedWork";
-import About from "@/components/About";
-import Career from "@/components/Career";
-import Blog from "@/components/Blog";
-import NewsFeed from "@/components/NewsFeed";
-import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
-import { BackgroundScene } from "@/components/3d/Scene";
-import { MagneticCursor } from "@/components/ui/MagneticCursor";
 
-// Custom loader component
-const Loader = ({ isLoading }: { isLoading: boolean }) => {
+// Lazy load heavy components
+const SocialProof = lazy(() => import("@/components/SocialProof"));
+const FeaturedWork = lazy(() => import("@/components/FeaturedWork"));
+const About = lazy(() => import("@/components/About"));
+const Career = lazy(() => import("@/components/Career"));
+const Blog = lazy(() => import("@/components/Blog"));
+const NewsFeed = lazy(() => import("@/components/NewsFeed"));
+const Contact = lazy(() => import("@/components/Contact"));
+
+// Lazy load 3D components (heavy bundle)
+const BackgroundScene = lazy(() =>
+  import("@/components/3d/Scene").then(mod => ({ default: mod.BackgroundScene }))
+);
+const MagneticCursor = lazy(() =>
+  import("@/components/ui/MagneticCursor").then(mod => ({ default: mod.MagneticCursor }))
+);
+
+// Device performance detection
+const useDevicePerformance = () => {
+  const [isLowEnd, setIsLowEnd] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Check for mobile
+    const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+    setIsMobile(mobile);
+
+    // Check for low-end device indicators
+    const lowEnd =
+      navigator.hardwareConcurrency <= 2 || // 2 or fewer CPU cores
+      (navigator as any).deviceMemory <= 2 || // 2GB or less RAM
+      mobile; // Treat mobile as lower performance
+
+    setIsLowEnd(lowEnd);
+  }, []);
+
+  return { isLowEnd, isMobile };
+};
+
+// Simple loader - optimized with no heavy animations
+const Loader = memo(({ isLoading }: { isLoading: boolean }) => {
   return (
     <AnimatePresence>
       {isLoading && (
@@ -22,125 +54,115 @@ const Loader = ({ isLoading }: { isLoading: boolean }) => {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-background"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: 'easeInOut' }}
+          transition={{ duration: 0.3 }}
         >
-          <div className="relative flex flex-col items-center gap-8">
-            {/* Animated circuit loader */}
-            <motion.div
-              className="relative w-24 h-24"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-            >
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                {/* Outer ring */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="hsl(var(--primary) / 0.2)"
-                  strokeWidth="2"
-                />
-                {/* Animated arc */}
-                <motion.circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeDasharray="70 200"
-                  initial={{ strokeDashoffset: 0 }}
-                  animate={{ strokeDashoffset: -270 }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                />
-                {/* Inner elements */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="30"
-                  fill="none"
-                  stroke="hsl(var(--secondary) / 0.3)"
-                  strokeWidth="1"
-                />
-                {/* Center node */}
-                <motion.circle
-                  cx="50"
-                  cy="50"
-                  r="8"
-                  fill="hsl(var(--primary))"
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-              </svg>
-            </motion.div>
-
-            {/* Loading text */}
-            <motion.div
-              className="text-muted-foreground text-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <motion.span
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                Initializing...
-              </motion.span>
-            </motion.div>
+          <div className="relative flex flex-col items-center gap-6">
+            {/* Simple CSS spinner - no JS animation overhead */}
+            <div className="w-12 h-12 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <span className="text-muted-foreground text-sm animate-pulse">
+              Loading...
+            </span>
           </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
-};
+});
+
+Loader.displayName = 'Loader';
+
+// Section fallback for lazy loading
+const SectionFallback = () => (
+  <div className="min-h-[200px] flex items-center justify-center">
+    <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+  </div>
+);
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const { isLowEnd, isMobile } = useDevicePerformance();
 
   useEffect(() => {
-    // Simulate loading time for initial resources
+    // Faster loading - just wait for initial paint
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1500);
+    }, 800);
 
     return () => clearTimeout(timer);
   }, []);
 
+  // Wrapper component that conditionally includes MagneticCursor
+  const ContentWrapper = ({ children }: { children: React.ReactNode }) => {
+    // Skip magnetic cursor on mobile/low-end for performance
+    if (isMobile || isLowEnd) {
+      return <>{children}</>;
+    }
+
+    return (
+      <Suspense fallback={<>{children}</>}>
+        <MagneticCursor>{children}</MagneticCursor>
+      </Suspense>
+    );
+  };
+
   return (
     <>
-      {/* Custom loader */}
+      {/* Simple loader */}
       <Loader isLoading={isLoading} />
 
       {/* Main content */}
-      <MagneticCursor>
+      <ContentWrapper>
         <div className="min-h-screen bg-background overflow-x-hidden">
-          {/* Global 3D Background */}
-          <BackgroundScene />
+          {/* 3D Background - only on high-end devices */}
+          {!isLowEnd && (
+            <Suspense fallback={null}>
+              <BackgroundScene />
+            </Suspense>
+          )}
 
-          {/* Navigation */}
+          {/* Navigation - always load immediately */}
           <Navigation />
 
-          {/* Main sections */}
+          {/* Main sections with lazy loading */}
           <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: isLoading ? 0 : 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.3 }}
           >
             <Hero />
-            <SocialProof />
-            <FeaturedWork />
-            <About />
-            <Career />
-            <Blog />
-            <NewsFeed />
-            <Contact />
+
+            <Suspense fallback={<SectionFallback />}>
+              <SocialProof />
+            </Suspense>
+
+            <Suspense fallback={<SectionFallback />}>
+              <FeaturedWork />
+            </Suspense>
+
+            <Suspense fallback={<SectionFallback />}>
+              <About />
+            </Suspense>
+
+            <Suspense fallback={<SectionFallback />}>
+              <Career />
+            </Suspense>
+
+            <Suspense fallback={<SectionFallback />}>
+              <Blog />
+            </Suspense>
+
+            <Suspense fallback={<SectionFallback />}>
+              <NewsFeed />
+            </Suspense>
+
+            <Suspense fallback={<SectionFallback />}>
+              <Contact />
+            </Suspense>
+
             <Footer />
           </motion.main>
         </div>
-      </MagneticCursor>
+      </ContentWrapper>
     </>
   );
 };
