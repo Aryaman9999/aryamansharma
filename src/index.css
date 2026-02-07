@@ -1,102 +1,94 @@
+/* Import premium font - MUST BE FIRST */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ============================================
+   SOPHISTICATED SCI-FI / DIGITAL HARDWARE THEME
+   ============================================ */
 
 @layer base {
   :root {
+    /* Light mode - keeping for compatibility but dark is primary */
     --background: 0 0% 100%;
     --foreground: 224 15% 12%;
-
     --card: 0 0% 100%;
     --card-foreground: 224 15% 12%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 224 15% 12%;
-
     --primary: 262 52% 47%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 220 14% 40%;
     --secondary-foreground: 0 0% 100%;
-
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
-
     --accent: 262 40% 95%;
     --accent-foreground: 262 52% 47%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-
     --border: 220 14% 91%;
     --input: 220 14% 91%;
     --ring: 262 52% 47%;
-
-    --radius: 0.5rem;
-    
-    /* Custom tokens for portfolio */
-    --hero-gradient-start: 262 40% 98%;
-    --hero-gradient-end: 220 14% 96%;
+    --radius: 0.75rem;
     --shadow-soft: 262 52% 47% / 0.08;
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Deep space dark theme - primary experience */
+    --background: 232 40% 3%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 232 35% 6%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 232 35% 6%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary - Electric Indigo/Violet */
+    --primary: 245 82% 67%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary - Cyan accent */
+    --secondary: 190 95% 45%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 232 30% 12%;
+    --muted-foreground: 220 15% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 245 60% 15%;
+    --accent-foreground: 245 82% 67%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 55%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
+    --border: 232 25% 15%;
+    --input: 232 25% 15%;
+    --ring: 245 82% 67%;
+
+    /* Sci-fi specific tokens */
+    --glow-primary: 245 82% 67%;
+    --glow-secondary: 190 95% 45%;
+    --circuit-line: 190 95% 45%;
+    --neural-node: 280 80% 60%;
+
+    --sidebar-background: 232 35% 5%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 245 82% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent: 232 30% 10%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-border: 232 25% 15%;
+    --sidebar-ring: 245 82% 67%;
   }
 }
 
@@ -105,42 +97,377 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  html::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  html::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  html::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+
+  html::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  
-  html {
-    scroll-behavior: smooth;
+
+  /* Premium heading styles */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
+    text-wrap: balance;
+  }
+
+  /* Code/mono styling */
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 }
 
 @layer utilities {
+
+  /* ============================================
+     GLASSMORPHISM UTILITIES
+     ============================================ */
+  .glass {
+    @apply backdrop-blur-md bg-white/5 border border-white/10;
+  }
+
+  .glass-strong {
+    @apply backdrop-blur-xl bg-white/10 border border-white/20;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-md bg-card/80 border border-border/50 shadow-xl;
+  }
+
+  /* ============================================
+     GLOW EFFECTS
+     ============================================ */
+  .glow {
+    box-shadow:
+      0 0 20px hsl(var(--primary) / 0.3),
+      0 0 40px hsl(var(--primary) / 0.1);
+  }
+
+  .glow-strong {
+    box-shadow:
+      0 0 20px hsl(var(--primary) / 0.5),
+      0 0 40px hsl(var(--primary) / 0.3),
+      0 0 60px hsl(var(--primary) / 0.1);
+  }
+
+  .glow-cyan {
+    box-shadow:
+      0 0 20px hsl(var(--secondary) / 0.3),
+      0 0 40px hsl(var(--secondary) / 0.1);
+  }
+
+  .text-glow {
+    text-shadow:
+      0 0 10px hsl(var(--primary) / 0.5),
+      0 0 20px hsl(var(--primary) / 0.3);
+  }
+
+  .text-glow-cyan {
+    text-shadow:
+      0 0 10px hsl(var(--secondary) / 0.5),
+      0 0 20px hsl(var(--secondary) / 0.3);
+  }
+
+  /* ============================================
+     GRADIENT UTILITIES
+     ============================================ */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+  }
+
+  .gradient-border {
+    position: relative;
+    background: hsl(var(--card));
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--secondary) / 0.5));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  /* ============================================
+     ANIMATION UTILITIES
+     ============================================ */
   .fade-in {
     animation: fadeIn 0.6s ease-in forwards;
   }
-  
+
   .fade-in-up {
-    animation: fadeInUp 0.6s ease-out forwards;
+    animation: fadeInUp 0.8s ease-out forwards;
   }
-  
+
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  .float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg,
+        transparent,
+        hsl(var(--primary) / 0.1),
+        transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Circuit animation for lines */
+  .circuit-flow {
+    animation: circuitFlow 3s linear infinite;
+  }
+
+  /* ============================================
+     KEYFRAMES
+     ============================================ */
   @keyframes fadeIn {
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
   }
-  
+
   @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(30px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
+
+  @keyframes pulseGlow {
+
+    0%,
+    100% {
+      box-shadow:
+        0 0 20px hsl(var(--primary) / 0.3),
+        0 0 40px hsl(var(--primary) / 0.1);
+    }
+
+    50% {
+      box-shadow:
+        0 0 30px hsl(var(--primary) / 0.5),
+        0 0 60px hsl(var(--primary) / 0.2);
+    }
+  }
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes circuitFlow {
+    0% {
+      stroke-dashoffset: 1000;
+    }
+
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes scanline {
+    0% {
+      transform: translateY(-100%);
+    }
+
+    100% {
+      transform: translateY(100vh);
+    }
+  }
+
+  /* ============================================
+     BUTTON ENHANCEMENTS
+     ============================================ */
+  .btn-glow {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+    filter: blur(10px);
+  }
+
+  .btn-glow:hover::before {
+    opacity: 0.5;
+  }
+
+  /* ============================================
+     HOVER EFFECTS
+     ============================================ */
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 10px 30px hsl(var(--primary) / 0.2),
+      0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .hover-glow {
+    @apply transition-all duration-300;
+  }
+
+  .hover-glow:hover {
+    box-shadow:
+      0 0 20px hsl(var(--primary) / 0.4),
+      0 0 40px hsl(var(--primary) / 0.2);
+  }
+
+  /* ============================================
+     GRID PATTERN BACKGROUND
+     ============================================ */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .bg-dot-pattern {
+    background-image: radial-gradient(hsl(var(--muted-foreground) / 0.15) 1px,
+        transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* ============================================
+     SECTION DIVIDERS
+     ============================================ */
+  .section-divider {
+    @apply relative;
+  }
+
+  .section-divider::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        hsl(var(--primary) / 0.5),
+        transparent);
+  }
+}
+
+/* ============================================
+   CUSTOM COMPONENTS
+   ============================================ */
+@layer components {
+
+  /* Frosted navigation */
+  .nav-glass {
+    @apply backdrop-blur-xl bg-background/70 border-b border-border/30;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Premium cards */
+  .card-premium {
+    @apply glass-card rounded-xl overflow-hidden;
+    @apply hover-lift hover-glow;
+  }
+
+  /* Chip/Tag styling */
+  .chip {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+    @apply bg-primary/10 text-primary border border-primary/20;
+  }
+
+  /* Circuit board decoration */
+  .circuit-decoration {
+    background-image:
+      linear-gradient(90deg, hsl(var(--secondary) / 0.1) 1px, transparent 1px),
+      linear-gradient(hsl(var(--secondary) / 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+/* ============================================
+   SELECTION STYLING
+   ============================================ */
+::selection {
+  background: hsl(var(--primary) / 0.3);
+  color: hsl(var(--foreground));
+}
+
+/* ============================================
+   FOCUS STYLES
+   ============================================ */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
 }
