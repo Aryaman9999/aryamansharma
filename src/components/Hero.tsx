@@ -127,18 +127,6 @@ const Hero = () => {
                         className="flex-1 text-center lg:text-left"
                         variants={itemVariants}
                     >
-                        {/* Badge */}
-                        <motion.div
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/20 mb-8"
-                            variants={itemVariants}
-                        >
-                            <Cpu className="w-4 h-4 text-primary" />
-                            <span className="text-sm text-muted-foreground">
-                                Electronics & AI Engineer
-                            </span>
-                            <Sparkles className="w-4 h-4 text-secondary" />
-                        </motion.div>
-
                         {/* Main Title with Decoding Effect */}
                         <motion.h1
                             className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground mb-6 leading-tight"

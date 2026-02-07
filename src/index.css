@@ -1,5 +1,4 @@
-/* Import premium font - MUST BE FIRST */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Fonts loaded via index.html for better performance */
 
 @tailwind base;
 @tailwind components;
@@ -99,6 +98,19 @@
 
   html {
     scroll-behavior: smooth;
+    /* Prevent layout thrashing during scroll */
+    overflow-anchor: auto;
+  }
+
+  /* GPU acceleration for animated elements */
+  .gpu-accelerate {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Content containment for sections - improves layout performance */
+  section {
+    contain: layout style;
   }
 
   /* Custom scrollbar */
