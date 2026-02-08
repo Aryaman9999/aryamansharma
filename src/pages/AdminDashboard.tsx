@@ -12,6 +12,16 @@ import { toast } from "sonner";
 import { LogOut, Plus, Trash2, Save } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
+// Helper function to generate URL-friendly slugs from titles
+const generateSlug = (title: string): string => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Collapse multiple hyphens
+    .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+};
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -171,7 +181,7 @@ const AdminDashboard = () => {
       if (resumeFile) {
         const fileExt = resumeFile.name.split('.').pop();
         const fileName = `resume-${Date.now()}.${fileExt}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('files')
           .upload(fileName, resumeFile, { upsert: true });
@@ -191,15 +201,15 @@ const AdminDashboard = () => {
 
         const { error: settingsError } = existingSetting
           ? await supabase
-              .from('site_settings')
-              .update({ value: publicUrl })
-              .eq('key', 'resume_url')
+            .from('site_settings')
+            .update({ value: publicUrl })
+            .eq('key', 'resume_url')
           : await supabase
-              .from('site_settings')
-              .insert({ key: 'resume_url', value: publicUrl });
+            .from('site_settings')
+            .insert({ key: 'resume_url', value: publicUrl });
 
         if (settingsError) throw settingsError;
-        
+
         setResumeUrl(publicUrl);
         setResumeFile(null);
       }
@@ -748,7 +758,7 @@ const AdminDashboard = () => {
                             onChange={(e) => setProjectImageFile(e.target.files?.[0] || null)}
                           />
                         </div>
-                        <Button 
+                        <Button
                           type="button"
                           onClick={uploadProjectImage}
                           disabled={!projectImageFile}
@@ -799,9 +809,9 @@ const AdminDashboard = () => {
                       onChange={(e) => setEditingProject({ ...editingProject, case_study_url: e.target.value })}
                     />
                     <Input
-                    placeholder="GitHub URL (e.g., https://github.com/...)"
-                    value={editingProject.github_url || ""}
-                    onChange={(e) => setEditingProject({ ...editingProject, github_url: e.target.value })}
+                      placeholder="GitHub URL (e.g., https://github.com/...)"
+                      value={editingProject.github_url || ""}
+                      onChange={(e) => setEditingProject({ ...editingProject, github_url: e.target.value })}
                     />
                     <Input
                       placeholder="Live Demo URL (e.g., https://...)"
@@ -943,6 +953,7 @@ const AdminDashboard = () => {
                             </div>
                             <p className="text-sm text-muted-foreground">{blog.description}</p>
                             <p className="text-xs text-muted-foreground mt-1">{blog.read_time}</p>
+                            <p className="text-xs text-primary/70 mt-1">/{blog.slug}</p>
                           </div>
                           <div className="flex gap-2">
                             <Button
@@ -963,18 +974,37 @@ const AdminDashboard = () => {
                         </div>
                       ))}
                     </div>
-                    <Button onClick={() => setEditingBlog({ title: "", description: "", content: "", read_time: "5 min read", published: false, display_order: 0 })}>
+                    <Button onClick={() => setEditingBlog({ title: "", description: "", content: "", read_time: "5 min read", published: false, display_order: 0, slug: "" })}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Blog Post
                     </Button>
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <Input
-                      placeholder="Blog post title"
-                      value={editingBlog.title}
-                      onChange={(e) => setEditingBlog({ ...editingBlog, title: e.target.value })}
-                    />
+                    <div className="space-y-2">
+                      <Label>Title</Label>
+                      <Input
+                        placeholder="Blog post title"
+                        value={editingBlog.title}
+                        onChange={(e) => {
+                          const newTitle = e.target.value;
+                          const autoSlug = !editingBlog.id ? generateSlug(newTitle) : editingBlog.slug;
+                          setEditingBlog({ ...editingBlog, title: newTitle, slug: autoSlug });
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>URL Slug</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">/blog/</span>
+                        <Input
+                          placeholder="my-blog-post"
+                          value={editingBlog.slug || ""}
+                          onChange={(e) => setEditingBlog({ ...editingBlog, slug: generateSlug(e.target.value) })}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">The URL slug is auto-generated from the title but can be customized.</p>
+                    </div>
                     <Textarea
                       placeholder="Short description"
                       value={editingBlog.description}
@@ -1017,7 +1047,7 @@ const AdminDashboard = () => {
                             onChange={(e) => setBlogImageFile(e.target.files?.[0] || null)}
                           />
                         </div>
-                        <Button 
+                        <Button
                           type="button"
                           onClick={uploadBlogImage}
                           disabled={!blogImageFile}

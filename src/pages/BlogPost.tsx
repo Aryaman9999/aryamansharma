@@ -10,23 +10,23 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
 const BlogPost = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPost();
-  }, [id]);
+  }, [slug]);
 
   const loadPost = async () => {
     const { data } = await supabase
       .from("blog_posts")
       .select("*")
-      .eq("id", id)
+      .eq("slug", slug)
       .eq("published", true)
       .single();
-    
+
     setPost(data);
     setLoading(false);
   };
@@ -59,15 +59,15 @@ const BlogPost = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <article className="container mx-auto max-w-3xl px-6 py-24">
-        <Button 
-          onClick={() => navigate("/")} 
-          variant="ghost" 
+        <Button
+          onClick={() => navigate("/")}
+          variant="ghost"
           className="mb-8"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        
+
         <header className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             {post.title}

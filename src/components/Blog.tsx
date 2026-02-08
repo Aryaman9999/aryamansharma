@@ -35,7 +35,7 @@ const Blog = () => {
             <Card
               key={article.id}
               className="hover:shadow-soft-lg transition-shadow duration-300 cursor-pointer border-border"
-              onClick={() => navigate(`/blog/${article.id}`)}
+              onClick={() => navigate(`/blog/${article.slug}`)}
             >
               <CardHeader>
                 <div className="w-full h-48 bg-accent rounded-md mb-4 flex items-center justify-center text-muted-foreground overflow-hidden">

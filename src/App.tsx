@@ -21,7 +21,7 @@ const App = () => {
         <HashRouter> {/* <-- CHANGED (and removed basename) */}
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/blog/:id" element={<BlogPost />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
