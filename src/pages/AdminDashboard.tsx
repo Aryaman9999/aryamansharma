@@ -9,7 +9,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { LogOut, Plus, Trash2, Save, Mail, Upload, Loader2 } from "lucide-react";
+import { LogOut, Plus, Trash2, Save, Mail, Upload, Loader2, HardDrive, RefreshCw, Eye, Copy, AlertTriangle, Check, Grid3X3, List, Search, X, FileImage, File } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import RichTextEditor from "@/components/RichTextEditor";
 
@@ -122,6 +138,32 @@ const AdminDashboard = () => {
     content: "",
     image_url: ""
   });
+
+  // Storage Manager state
+  interface BucketFile {
+    name: string;
+    size: number;
+    created_at: string;
+    updated_at: string;
+    publicUrl: string;
+    isImage: boolean;
+  }
+  interface FileReference {
+    table: string;
+    field: string;
+    id: string;
+    title?: string;
+  }
+  const [bucketFiles, setBucketFiles] = useState<BucketFile[]>([]);
+  const [fileReferences, setFileReferences] = useState<Record<string, FileReference[]>>({});
+  const [storageLoading, setStorageLoading] = useState(false);
+  const [storageViewMode, setStorageViewMode] = useState<'grid' | 'list'>('grid');
+  const [storageSearch, setStorageSearch] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<BucketFile | null>(null);
+  const [previewFile, setPreviewFile] = useState<BucketFile | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -545,6 +587,217 @@ const AdminDashboard = () => {
     }
   };
 
+  // Storage Manager Functions
+  const loadBucketFiles = async () => {
+    setStorageLoading(true);
+    try {
+      // List all files in the bucket
+      const { data: files, error } = await supabase.storage
+        .from('files')
+        .list('', { limit: 1000, sortBy: { column: 'created_at', order: 'desc' } });
+
+      if (error) throw error;
+
+      // Get public URLs for all files
+      const filesWithUrls: BucketFile[] = (files || [])
+        .filter(f => f.name !== '.emptyFolderPlaceholder') // Filter out placeholder files
+        .map(file => {
+          const { data: { publicUrl } } = supabase.storage
+            .from('files')
+            .getPublicUrl(file.name);
+
+          const imageExtensions = ['jpg', 'jpeg', 'jfif', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'tiff', 'tif', 'avif'];
+          const ext = file.name.split('.').pop()?.toLowerCase() || '';
+
+          return {
+            name: file.name,
+            size: file.metadata?.size || 0,
+            created_at: file.created_at || '',
+            updated_at: file.updated_at || '',
+            publicUrl,
+            isImage: imageExtensions.includes(ext)
+          };
+        });
+
+      setBucketFiles(filesWithUrls);
+
+      // Now scan database for references
+      const references: Record<string, FileReference[]> = {};
+
+      // Check hero_content - use * to get all fields
+      const { data: heroData } = await supabase.from("hero_content").select("*") as { data: any[] | null };
+      if (heroData) {
+        heroData.forEach(item => {
+          if (item.image_url) {
+            filesWithUrls.forEach(file => {
+              if (item.image_url?.includes(file.name)) {
+                if (!references[file.name]) references[file.name] = [];
+                references[file.name].push({ table: 'Hero', field: 'image_url', id: item.id, title: item.title || 'Hero Section' });
+              }
+            });
+          }
+        });
+      }
+
+      // Check about_content - use * to get all fields
+      const { data: aboutData } = await supabase.from("about_content").select("*") as { data: any[] | null };
+      if (aboutData) {
+        aboutData.forEach(item => {
+          filesWithUrls.forEach(file => {
+            if (item.image_url?.includes(file.name)) {
+              if (!references[file.name]) references[file.name] = [];
+              references[file.name].push({ table: 'About', field: 'image_url', id: item.id, title: item.title || 'About Section' });
+            }
+            if (item.content?.includes(file.name)) {
+              if (!references[file.name]) references[file.name] = [];
+              references[file.name].push({ table: 'About', field: 'content', id: item.id, title: item.title || 'About Section' });
+            }
+          });
+        });
+      }
+
+      // Check projects - use * to get all fields
+      const { data: projectData } = await supabase.from("projects").select("*") as { data: any[] | null };
+      if (projectData) {
+        projectData.forEach(item => {
+          filesWithUrls.forEach(file => {
+            if (item.image_url?.includes(file.name)) {
+              if (!references[file.name]) references[file.name] = [];
+              references[file.name].push({ table: 'Project', field: 'image_url', id: item.id, title: item.title });
+            }
+            if (item.content?.includes(file.name)) {
+              if (!references[file.name]) references[file.name] = [];
+              references[file.name].push({ table: 'Project', field: 'content', id: item.id, title: item.title });
+            }
+            if (item.description?.includes(file.name)) {
+              if (!references[file.name]) references[file.name] = [];
+              references[file.name].push({ table: 'Project', field: 'description', id: item.id, title: item.title });
+            }
+          });
+        });
+      }
+
+      // Check blog_posts - use * to get all fields including image_url
+      const { data: blogData } = await supabase.from("blog_posts").select("*") as { data: any[] | null };
+      if (blogData) {
+        blogData.forEach((item: any) => {
+          filesWithUrls.forEach(file => {
+            if (item.image_url?.includes(file.name)) {
+              if (!references[file.name]) references[file.name] = [];
+              references[file.name].push({ table: 'Blog', field: 'image_url', id: item.id, title: item.title });
+            }
+            if (item.content?.includes(file.name)) {
+              if (!references[file.name]) references[file.name] = [];
+              references[file.name].push({ table: 'Blog', field: 'content', id: item.id, title: item.title });
+            }
+            if (item.description?.includes(file.name)) {
+              if (!references[file.name]) references[file.name] = [];
+              references[file.name].push({ table: 'Blog', field: 'description', id: item.id, title: item.title });
+            }
+          });
+        });
+      }
+
+      // Check site_settings (resume) - use * to get all fields
+      const { data: settingsData } = await supabase.from("site_settings").select("*") as { data: any[] | null };
+      if (settingsData) {
+        settingsData.forEach(item => {
+          filesWithUrls.forEach(file => {
+            if (item.value?.includes(file.name)) {
+              if (!references[file.name]) references[file.name] = [];
+              references[file.name].push({ table: 'Settings', field: item.key, id: item.id, title: `Setting: ${item.key}` });
+            }
+          });
+        });
+      }
+
+      setFileReferences(references);
+    } catch (error: any) {
+      console.error('Error loading bucket files:', error);
+      toast.error('Failed to load storage files');
+    } finally {
+      setStorageLoading(false);
+    }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const getTotalStorageUsed = (): number => {
+    return bucketFiles.reduce((acc, file) => acc + file.size, 0);
+  };
+
+  const getOrphanedFiles = (): BucketFile[] => {
+    return bucketFiles.filter(file => !fileReferences[file.name] || fileReferences[file.name].length === 0);
+  };
+
+  const getFilteredFiles = (): BucketFile[] => {
+    if (!storageSearch) return bucketFiles;
+    return bucketFiles.filter(file =>
+      file.name.toLowerCase().includes(storageSearch.toLowerCase())
+    );
+  };
+
+  const copyToClipboard = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('URL copied to clipboard');
+    } catch {
+      toast.error('Failed to copy URL');
+    }
+  };
+
+  const handleDeleteFile = async (file: BucketFile) => {
+    try {
+      const { error } = await supabase.storage.from('files').remove([file.name]);
+      if (error) throw error;
+      toast.success(`Deleted: ${file.name}`);
+      setDeleteDialogOpen(false);
+      setFileToDelete(null);
+      loadBucketFiles();
+    } catch (error: any) {
+      toast.error(`Failed to delete: ${error.message}`);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      const filesToDelete = Array.from(selectedFiles);
+      const { error } = await supabase.storage.from('files').remove(filesToDelete);
+      if (error) throw error;
+      toast.success(`Deleted ${filesToDelete.length} files`);
+      setSelectedFiles(new Set());
+      setBulkDeleteDialogOpen(false);
+      loadBucketFiles();
+    } catch (error: any) {
+      toast.error(`Failed to delete files: ${error.message}`);
+    }
+  };
+
+  const toggleFileSelection = (fileName: string) => {
+    const newSelected = new Set(selectedFiles);
+    if (newSelected.has(fileName)) {
+      newSelected.delete(fileName);
+    } else {
+      newSelected.add(fileName);
+    }
+    setSelectedFiles(newSelected);
+  };
+
+  const selectAllOrphaned = () => {
+    const orphaned = getOrphanedFiles();
+    setSelectedFiles(new Set(orphaned.map(f => f.name)));
+  };
+
+  const clearSelection = () => {
+    setSelectedFiles(new Set());
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -561,7 +814,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="hero" className="space-y-6">
-          <TabsList className="grid grid-cols-8 w-full">
+          <TabsList className="grid grid-cols-9 w-full">
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="companies">Companies</TabsTrigger>
@@ -570,6 +823,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="social">Social</TabsTrigger>
             <TabsTrigger value="emails">Emails</TabsTrigger>
+            <TabsTrigger value="storage" onClick={() => loadBucketFiles()}>Storage</TabsTrigger>
           </TabsList>
 
           {/* Hero Content Tab */}
@@ -1209,7 +1463,485 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Storage Manager Tab */}
+          <TabsContent value="storage">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <HardDrive className="w-5 h-5" />
+                      Storage Manager
+                    </CardTitle>
+                    <CardDescription>
+                      {bucketFiles.length} files • {formatFileSize(getTotalStorageUsed())} used
+                      {getOrphanedFiles().length > 0 && (
+                        <span className="text-yellow-600 ml-2">
+                          • {getOrphanedFiles().length} orphaned (safe to delete)
+                        </span>
+                      )}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={loadBucketFiles}
+                      disabled={storageLoading}
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-2 ${storageLoading ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Controls */}
+                <div className="flex flex-wrap gap-3 items-center">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search files..."
+                      value={storageSearch}
+                      onChange={(e) => setStorageSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <div className="flex gap-1 border rounded-md">
+                    <Button
+                      variant={storageViewMode === 'grid' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setStorageViewMode('grid')}
+                    >
+                      <Grid3X3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={storageViewMode === 'list' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setStorageViewMode('list')}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {getOrphanedFiles().length > 0 && (
+                    <Button variant="outline" size="sm" onClick={selectAllOrphaned}>
+                      Select Orphaned ({getOrphanedFiles().length})
+                    </Button>
+                  )}
+                  {selectedFiles.size > 0 && (
+                    <>
+                      <Button variant="outline" size="sm" onClick={clearSelection}>
+                        Clear ({selectedFiles.size})
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setBulkDeleteDialogOpen(true)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Selected
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                {/* Loading State */}
+                {storageLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : bucketFiles.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <HardDrive className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No files in storage</p>
+                    <p className="text-sm">Upload files through the other tabs</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Grid View */}
+                    {storageViewMode === 'grid' && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {getFilteredFiles().map((file) => {
+                          const refs = fileReferences[file.name] || [];
+                          const isOrphaned = refs.length === 0;
+                          const isSelected = selectedFiles.has(file.name);
+
+                          return (
+                            <div
+                              key={file.name}
+                              className={`relative group border rounded-lg overflow-hidden transition-all ${isSelected ? 'ring-2 ring-primary' : ''
+                                } ${isOrphaned ? 'border-yellow-500/50' : 'border-green-500/50'}`}
+                            >
+                              {/* Selection checkbox */}
+                              <button
+                                className={`absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 transition-all ${isSelected
+                                  ? 'bg-primary border-primary text-primary-foreground'
+                                  : 'bg-background/80 border-muted-foreground/50 hover:border-primary'
+                                  }`}
+                                onClick={() => toggleFileSelection(file.name)}
+                              >
+                                {isSelected && <Check className="w-3 h-3 mx-auto" />}
+                              </button>
+
+                              {/* Status badge */}
+                              <div className={`absolute top-2 right-2 z-10 px-2 py-0.5 rounded text-xs font-medium ${isOrphaned
+                                ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                                : 'bg-green-500/20 text-green-700 dark:text-green-400'
+                                }`}>
+                                {isOrphaned ? 'Orphaned' : `${refs.length} ref${refs.length > 1 ? 's' : ''}`}
+                              </div>
+
+                              {/* Thumbnail */}
+                              <div
+                                className="aspect-square bg-muted flex items-center justify-center cursor-pointer"
+                                onClick={() => file.isImage && setPreviewFile(file)}
+                              >
+                                {file.isImage ? (
+                                  <img
+                                    src={file.publicUrl}
+                                    alt={file.name}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <File className="w-12 h-12 text-muted-foreground" />
+                                )}
+                              </div>
+
+                              {/* Info */}
+                              <div className="p-2 space-y-1">
+                                <p className="text-xs font-medium truncate" title={file.name}>
+                                  {file.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatFileSize(file.size)}
+                                </p>
+
+                                {/* Actions */}
+                                <div className="flex gap-1 pt-1">
+                                  {file.isImage && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 px-2"
+                                      onClick={() => setPreviewFile(file)}
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={() => copyToClipboard(file.publicUrl)}
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2 text-destructive hover:text-destructive"
+                                    onClick={() => {
+                                      setFileToDelete(file);
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* List View */}
+                    {storageViewMode === 'list' && (
+                      <div className="space-y-2">
+                        {getFilteredFiles().map((file) => {
+                          const refs = fileReferences[file.name] || [];
+                          const isOrphaned = refs.length === 0;
+                          const isSelected = selectedFiles.has(file.name);
+
+                          return (
+                            <div
+                              key={file.name}
+                              className={`flex items-center gap-4 p-3 border rounded-lg transition-all ${isSelected ? 'ring-2 ring-primary' : ''
+                                } ${isOrphaned ? 'border-yellow-500/50 bg-yellow-500/5' : 'border-green-500/50 bg-green-500/5'}`}
+                            >
+                              {/* Checkbox */}
+                              <button
+                                className={`w-5 h-5 rounded border-2 flex-shrink-0 transition-all ${isSelected
+                                  ? 'bg-primary border-primary text-primary-foreground'
+                                  : 'border-muted-foreground/50 hover:border-primary'
+                                  }`}
+                                onClick={() => toggleFileSelection(file.name)}
+                              >
+                                {isSelected && <Check className="w-3 h-3 mx-auto" />}
+                              </button>
+
+                              {/* Thumbnail */}
+                              <div className="w-12 h-12 bg-muted rounded flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                {file.isImage ? (
+                                  <img
+                                    src={file.publicUrl}
+                                    alt={file.name}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <File className="w-6 h-6 text-muted-foreground" />
+                                )}
+                              </div>
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{file.name}</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{formatFileSize(file.size)}</span>
+                                  <span>•</span>
+                                  <span>{new Date(file.created_at).toLocaleDateString()}</span>
+                                </div>
+                                {refs.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {refs.slice(0, 3).map((ref, i) => (
+                                      <span key={i} className="text-xs bg-green-500/20 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded">
+                                        {ref.table}: {ref.title}
+                                      </span>
+                                    ))}
+                                    {refs.length > 3 && (
+                                      <span className="text-xs text-muted-foreground">
+                                        +{refs.length - 3} more
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Status */}
+                              <div className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ${isOrphaned
+                                ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                                : 'bg-green-500/20 text-green-700 dark:text-green-400'
+                                }`}>
+                                {isOrphaned ? 'Orphaned' : 'In Use'}
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex gap-1 flex-shrink-0">
+                                {file.isImage && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setPreviewFile(file)}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(file.publicUrl)}
+                                >
+                                  <Copy className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => {
+                                    setFileToDelete(file);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        {/* Preview Dialog */}
+        <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="truncate">{previewFile?.name}</DialogTitle>
+            </DialogHeader>
+            {previewFile && (
+              <div className="space-y-4">
+                <img
+                  src={previewFile.publicUrl}
+                  alt={previewFile.name}
+                  className="max-h-[60vh] mx-auto object-contain rounded"
+                />
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{formatFileSize(previewFile.size)}</span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(previewFile.publicUrl)}
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy URL
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setFileToDelete(previewFile);
+                        setDeleteDialogOpen(true);
+                        setPreviewFile(null);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+                {fileReferences[previewFile.name]?.length > 0 && (
+                  <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-2">
+                      This file is referenced in:
+                    </p>
+                    <ul className="text-sm space-y-1">
+                      {fileReferences[previewFile.name].map((ref, i) => (
+                        <li key={i} className="text-muted-foreground">
+                          • {ref.table} → {ref.title} ({ref.field})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Single Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                {fileToDelete && fileReferences[fileToDelete.name]?.length > 0 && (
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                )}
+                Delete File
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-3">
+                  <p>Are you sure you want to delete <strong>{fileToDelete?.name}</strong>?</p>
+
+                  {fileToDelete && fileReferences[fileToDelete.name]?.length > 0 && (
+                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                      <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400 mb-2">
+                        ⚠️ Warning: This file is currently in use!
+                      </p>
+                      <ul className="text-sm space-y-1">
+                        {fileReferences[fileToDelete.name].map((ref, i) => (
+                          <li key={i} className="text-muted-foreground">
+                            • {ref.table} → {ref.title} ({ref.field})
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-sm text-yellow-600 mt-2">
+                        Deleting this file will break these references!
+                      </p>
+                    </div>
+                  )}
+
+                  {fileToDelete && (!fileReferences[fileToDelete.name] || fileReferences[fileToDelete.name].length === 0) && (
+                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <p className="text-sm text-green-700 dark:text-green-400">
+                        ✓ This file is not referenced anywhere. Safe to delete.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => fileToDelete && handleDeleteFile(fileToDelete)}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Bulk Delete Confirmation Dialog */}
+        <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                Delete {selectedFiles.size} Files
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-3">
+                  <p>Are you sure you want to delete {selectedFiles.size} selected files?</p>
+
+                  {(() => {
+                    const referencedFiles = Array.from(selectedFiles).filter(
+                      fileName => fileReferences[fileName]?.length > 0
+                    );
+
+                    if (referencedFiles.length > 0) {
+                      return (
+                        <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                          <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400 mb-2">
+                            ⚠️ Warning: {referencedFiles.length} file(s) are in use!
+                          </p>
+                          <ul className="text-sm space-y-1 max-h-32 overflow-y-auto">
+                            {referencedFiles.slice(0, 5).map((fileName) => (
+                              <li key={fileName} className="text-muted-foreground truncate">
+                                • {fileName}
+                              </li>
+                            ))}
+                            {referencedFiles.length > 5 && (
+                              <li className="text-muted-foreground">
+                                ...and {referencedFiles.length - 5} more
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <p className="text-sm text-green-700 dark:text-green-400">
+                          ✓ None of these files are referenced. Safe to delete.
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={handleBulkDelete}
+              >
+                Delete All
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
