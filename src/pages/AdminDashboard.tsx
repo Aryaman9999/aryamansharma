@@ -9,8 +9,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { LogOut, Plus, Trash2, Save } from "lucide-react";
+import { LogOut, Plus, Trash2, Save, Mail, Upload, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import RichTextEditor from "@/components/RichTextEditor";
+
+const ImageUrlInput = ({
+  value,
+  onChange,
+  onUpload
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  onUpload: (file: File) => Promise<string | null>;
+}) => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setUploading(true);
+      try {
+        const url = await onUpload(e.target.files[0]);
+        if (url) onChange(url);
+      } finally {
+        setUploading(false);
+      }
+    }
+  };
+
+  return (
+    <div className="flex gap-2">
+      <Input
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="https://..."
+        className="flex-1"
+      />
+      <div className="relative">
+        <Input
+          type="file"
+          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+          onChange={handleFileChange}
+          accept="image/*"
+          disabled={uploading}
+          title="Upload image"
+        />
+        <Button variant="outline" type="button" disabled={uploading} size="icon">
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 // Helper function to generate URL-friendly slugs from titles
 const generateSlug = (title: string): string => {
@@ -258,6 +307,29 @@ const AdminDashboard = () => {
       loadAllContent();
     } catch (error: any) {
       toast.error(error.message);
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `upload-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('files')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('files')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error: any) {
+      toast.error(error.message);
+      return null;
     }
   };
 
@@ -542,10 +614,10 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <Label>Image URL (optional)</Label>
-                  <Input
+                  <ImageUrlInput
                     value={heroContent.image_url || ""}
-                    onChange={(e) => setHeroContent({ ...heroContent, image_url: e.target.value })}
-                    placeholder="https://..."
+                    onChange={(val) => setHeroContent({ ...heroContent, image_url: val })}
+                    onUpload={handleImageUpload}
                   />
                 </div>
                 <div className="space-y-2">
@@ -607,10 +679,10 @@ const AdminDashboard = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Image URL (optional)</Label>
-                  <Input
-                    placeholder="https://..."
+                  <ImageUrlInput
                     value={aboutContent.image_url || ""}
-                    onChange={(e) => setAboutContent({ ...aboutContent, image_url: e.target.value })}
+                    onChange={(val) => setAboutContent({ ...aboutContent, image_url: val })}
+                    onUpload={handleImageUpload}
                   />
                 </div>
                 <Button onClick={saveAboutContent}>
@@ -763,65 +835,22 @@ const AdminDashboard = () => {
                       value={editingProject.tags?.join(", ") || ""}
                       onChange={(e) => setEditingProject({ ...editingProject, tags: e.target.value.split(",").map((t: string) => t.trim()) })}
                     />
-                    <Input
-                      placeholder="Image URL"
-                      value={editingProject.image_url || ""}
-                      onChange={(e) => setEditingProject({ ...editingProject, image_url: e.target.value })}
-                    />
                     <div className="space-y-2">
-                      <Label>Upload Images for Markdown</Label>
-                      <div className="flex gap-2 items-end">
-                        <div className="flex-1">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setProjectImageFile(e.target.files?.[0] || null)}
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          onClick={uploadProjectImage}
-                          disabled={!projectImageFile}
-                          variant="secondary"
-                        >
-                          Upload Image
-                        </Button>
-                      </div>
-                      {uploadedImageUrls.length > 0 && (
-                        <div className="space-y-2 p-3 bg-muted rounded-md">
-                          <p className="text-xs font-medium">Uploaded Image URLs (copy & paste into markdown):</p>
-                          {uploadedImageUrls.map((url, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                              <code className="text-xs bg-background p-2 rounded flex-1 overflow-x-auto">
-                                ![image]({url})
-                              </code>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(`![image](${url})`);
-                                  toast.success("Copied to clipboard!");
-                                }}
-                              >
-                                Copy
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <Label>Cover Image URL</Label>
+                      <ImageUrlInput
+                        value={editingProject.image_url || ""}
+                        onChange={(val) => setEditingProject({ ...editingProject, image_url: val })}
+                        onUpload={handleImageUpload}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label>Project Content (Markdown)</Label>
-                      <Textarea
-                        placeholder="Write your project details in markdown format...&#10;&#10;## Overview&#10;This project...&#10;&#10;## Features&#10;- Feature 1&#10;- Feature 2&#10;&#10;## Images&#10;![Alt text](image-url-here)"
-                        value={editingProject.content || ""}
-                        onChange={(e) => setEditingProject({ ...editingProject, content: e.target.value })}
-                        rows={15}
-                        className="font-mono text-sm"
+                      <Label>Project Content</Label>
+                      <RichTextEditor
+                        content={editingProject.content || ""}
+                        onChange={(value) => setEditingProject({ ...editingProject, content: value })}
+                        onImageUpload={handleImageUpload}
+                        className="min-h-[300px]"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Use markdown formatting. Upload images above and paste the URLs. Leave blank to use external case study URL instead.
-                      </p>
                     </div>
                     <Input
                       placeholder="External Case Study URL (optional if content is provided)"
@@ -1031,12 +1060,15 @@ const AdminDashboard = () => {
                       onChange={(e) => setEditingBlog({ ...editingBlog, description: e.target.value })}
                       rows={3}
                     />
-                    <Textarea
-                      placeholder="Full content (optional)"
-                      value={editingBlog.content || ""}
-                      onChange={(e) => setEditingBlog({ ...editingBlog, content: e.target.value })}
-                      rows={6}
-                    />
+                    <div className="space-y-2">
+                      <Label>Content</Label>
+                      <RichTextEditor
+                        content={editingBlog.content || ""}
+                        onChange={(value) => setEditingBlog({ ...editingBlog, content: value })}
+                        onImageUpload={handleImageUpload}
+                        className="min-h-[400px]"
+                      />
+                    </div>
                     <Input
                       placeholder="Read time (e.g., 5 min read)"
                       value={editingBlog.read_time}
@@ -1050,54 +1082,12 @@ const AdminDashboard = () => {
                       <Label>Published</Label>
                     </div>
                     <div className="space-y-2">
-                      <Label>Image URL (optional)</Label>
-                      <Input
-                        placeholder="https://..."
+                      <Label>Cover Image URL (optional)</Label>
+                      <ImageUrlInput
                         value={editingBlog.image_url || ""}
-                        onChange={(e) => setEditingBlog({ ...editingBlog, image_url: e.target.value })}
+                        onChange={(val) => setEditingBlog({ ...editingBlog, image_url: val })}
+                        onUpload={handleImageUpload}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Upload Images for Markdown / Feature</Label>
-                      <div className="flex gap-2 items-end">
-                        <div className="flex-1">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setBlogImageFile(e.target.files?.[0] || null)}
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          onClick={uploadBlogImage}
-                          disabled={!blogImageFile}
-                          variant="secondary"
-                        >
-                          Upload Image
-                        </Button>
-                      </div>
-                      {uploadedBlogImageUrls.length > 0 && (
-                        <div className="space-y-2 p-3 bg-muted rounded-md">
-                          <p className="text-xs font-medium">Uploaded Image URLs (copy & paste into markdown or use as image_url):</p>
-                          {uploadedBlogImageUrls.map((url, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                              <code className="text-xs bg-background p-2 rounded flex-1 overflow-x-auto">
-                                ![image]({url})
-                              </code>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(`![image](${url})`);
-                                  toast.success("Copied to clipboard!");
-                                }}
-                              >
-                                Copy
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                     <Input
                       type="number"
