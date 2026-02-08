@@ -697,6 +697,7 @@ const AdminDashboard = () => {
                                 <span key={i} className="text-xs bg-secondary px-2 py-1 rounded">{tag}</span>
                               ))}
                             </div>
+                            <p className="text-xs text-primary/70 mt-1">/{project.slug}</p>
                           </div>
                           <div className="flex gap-2">
                             <Button
@@ -717,18 +718,37 @@ const AdminDashboard = () => {
                         </div>
                       ))}
                     </div>
-                    <Button onClick={() => setEditingProject({ title: "", description: "", tags: [], image_url: "", case_study_url: "", display_order: 0, github_url: "", live_demo_url: "" })}>
+                    <Button onClick={() => setEditingProject({ title: "", description: "", tags: [], image_url: "", case_study_url: "", display_order: 0, github_url: "", live_demo_url: "", slug: "" })}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Project
                     </Button>
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <Input
-                      placeholder="Project title"
-                      value={editingProject.title}
-                      onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
-                    />
+                    <div className="space-y-2">
+                      <Label>Title</Label>
+                      <Input
+                        placeholder="Project title"
+                        value={editingProject.title}
+                        onChange={(e) => {
+                          const newTitle = e.target.value;
+                          const autoSlug = !editingProject.id ? generateSlug(newTitle) : editingProject.slug;
+                          setEditingProject({ ...editingProject, title: newTitle, slug: autoSlug });
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>URL Slug</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">/project/</span>
+                        <Input
+                          placeholder="my-awesome-project"
+                          value={editingProject.slug || ""}
+                          onChange={(e) => setEditingProject({ ...editingProject, slug: generateSlug(e.target.value) })}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">The URL slug is auto-generated from the title but can be customized.</p>
+                    </div>
                     <div className="space-y-2">
                       <Label>Project Description (Markdown supported)</Label>
                       <Textarea

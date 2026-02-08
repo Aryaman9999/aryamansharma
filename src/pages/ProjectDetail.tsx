@@ -10,22 +10,22 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
 const ProjectDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadProject();
-  }, [id]);
+  }, [slug]);
 
   const loadProject = async () => {
     const { data } = await supabase
       .from("projects")
       .select("*")
-      .eq("id", id)
+      .eq("slug", slug)
       .maybeSingle();
-    
+
     if (data) {
       setProject(data);
     }
@@ -76,7 +76,7 @@ const ProjectDetail = () => {
           )}
 
           <h1 className="text-4xl font-bold mb-4">{project.title}</h1>
-          
+
           <div className="flex flex-wrap gap-2 mb-6">
             {project.tags?.map((tag: string) => (
               <span

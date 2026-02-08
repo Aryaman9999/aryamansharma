@@ -66,7 +66,7 @@ const FeaturedWork = () => {
                 tiltAmount={10}
                 onClick={() => {
                   if (project.content) {
-                    navigate(`/project/${project.id}`);
+                    navigate(`/project/${project.slug}`);
                   } else if (project.case_study_url) {
                     window.open(project.case_study_url, '_blank');
                   }
@@ -186,7 +186,7 @@ const FeaturedWork = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         if (project.content) {
-                          navigate(`/project/${project.id}`);
+                          navigate(`/project/${project.slug}`);
                         } else if (project.case_study_url) {
                           window.open(project.case_study_url, '_blank');
                         }
