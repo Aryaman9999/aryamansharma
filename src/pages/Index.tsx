@@ -13,10 +13,7 @@ const Blog = lazy(() => import("@/components/Blog"));
 const NewsFeed = lazy(() => import("@/components/NewsFeed"));
 const Contact = lazy(() => import("@/components/Contact"));
 
-// Lazy load 3D components (heavy bundle)
-const BackgroundScene = lazy(() =>
-  import("@/components/3d/Scene").then(mod => ({ default: mod.BackgroundScene }))
-);
+// Lazy load custom cursor (only for desktop)
 const MagneticCursor = lazy(() =>
   import("@/components/ui/MagneticCursor").then(mod => ({ default: mod.MagneticCursor }))
 );
@@ -113,12 +110,7 @@ const Index = () => {
       {/* Main content */}
       <ContentWrapper>
         <div className="min-h-screen bg-background overflow-x-hidden">
-          {/* 3D Background - only on high-end devices */}
-          {!isLowEnd && (
-            <Suspense fallback={null}>
-              <BackgroundScene />
-            </Suspense>
-          )}
+          {/* Note: 3D Background is integrated into Hero section to avoid multiple WebGL contexts */}
 
           {/* Navigation - always load immediately */}
           <Navigation />

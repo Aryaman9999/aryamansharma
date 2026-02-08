@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Download, Moon, Sun, Menu, X, Cpu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Magnetic } from "@/components/ui/MagneticCursor";
+import { Magnetic } from "@/components/ui/Magnetic";
 
 const Navigation = () => {
   const [resumeUrl, setResumeUrl] = useState<string>("");

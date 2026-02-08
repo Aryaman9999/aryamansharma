@@ -7,7 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/ScrollAnimations";
 import { DecodingText } from "@/components/ui/DecodingText";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { Magnetic } from "@/components/ui/MagneticCursor";
+import { Magnetic } from "@/components/ui/Magnetic";
 
 const Career = () => {
   const [experiences, setExperiences] = useState<any[]>([]);

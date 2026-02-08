@@ -17,13 +17,13 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Code splitting for better caching and faster loads
+    // Improved code splitting for better caching and faster loads
     rollupOptions: {
       output: {
         manualChunks: {
-          // Separate Three.js into its own chunk
+          // Separate Three.js into its own chunk (large library)
           'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
-          // React ecosystem
+          // React ecosystem - core bundle
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           // Animation libraries
           'animation-vendor': ['framer-motion', '@react-spring/three'],
@@ -32,7 +32,15 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
+    // Performance optimizations
+    target: 'esnext',
+    minify: 'esbuild',
+    cssMinify: true,
     // Increase chunk size warning limit since Three.js is large
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 700,
+    // Source maps only in development
+    sourcemap: mode === 'development',
   },
 }));
+
+

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/ScrollAnimations";
 import { DecodingText } from "@/components/ui/DecodingText";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { Magnetic } from "@/components/ui/MagneticCursor";
+import { Magnetic } from "@/components/ui/Magnetic";
 
 const Contact = () => {
   const [socialLinks, setSocialLinks] = useState<any[]>([]);

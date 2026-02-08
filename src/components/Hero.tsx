@@ -1,12 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Download, Cpu, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { HeroScene } from "@/components/3d/Scene";
 import { DecodingText } from "@/components/ui/DecodingText";
-import { Magnetic } from "@/components/ui/MagneticCursor";
+import { Magnetic } from "@/components/ui/Magnetic";
 import { FadeInUp, Parallax } from "@/components/ui/ScrollAnimations";
+
+// Lazy load the 3D scene for better initial load performance
+const HeroScene = lazy(() =>
+    import("@/components/3d/Scene").then(mod => ({ default: mod.HeroScene }))
+);
 
 const Hero = () => {
     const [content, setContent] = useState(() => {
@@ -104,14 +108,17 @@ const Hero = () => {
             id="hero"
             className="relative min-h-screen flex items-center justify-center px-6 pt-24 pb-20 overflow-hidden"
         >
-            {/* 3D Background Scene */}
-            <HeroScene />
+            {/* 3D Background Scene - lazy loaded */}
+            <Suspense fallback={null}>
+                <HeroScene />
+            </Suspense>
 
             {/* Gradient overlay for readability */}
             <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background pointer-events-none" />
 
             {/* Decorative circuit lines */}
             <div className="absolute inset-0 circuit-decoration opacity-20 pointer-events-none" />
+
 
             {/* Content */}
             <motion.div

@@ -6,70 +6,87 @@ interface BackgroundGridProps {
     scrollY?: number;
 }
 
-// Optimized flowing particles - reduced count, throttled updates
+// Shared geometry for instancing
+const particleGeometry = new THREE.CircleGeometry(0.03, 4); // Reduced to 4-sided shape
+const nodeGeometry = new THREE.SphereGeometry(0.04, 4, 4);
+
+// Optimized flowing particles using InstancedMesh
 const DataParticles = memo(() => {
-    const particlesRef = useRef<THREE.Points>(null);
-    const count = 80; // Reduced from 200
+    const instancedMeshRef = useRef<THREE.InstancedMesh>(null);
+    const count = 50; // Reduced from 80
     const frameSkip = useRef(0);
+    const dummy = useMemo(() => new THREE.Object3D(), []);
 
-    const [positions, velocities] = useMemo(() => {
-        const pos = new Float32Array(count * 3);
+    const velocities = useMemo(() => {
         const vel = new Float32Array(count * 3);
-
         for (let i = 0; i < count; i++) {
-            pos[i * 3] = (Math.random() - 0.5) * 30;
-            pos[i * 3 + 1] = (Math.random() - 0.5) * 30;
-            pos[i * 3 + 2] = (Math.random() - 0.5) * 10 - 5;
-
-            vel[i * 3] = (Math.random() - 0.5) * 0.02;
-            vel[i * 3 + 1] = -Math.random() * 0.02 - 0.01;
+            vel[i * 3] = (Math.random() - 0.5) * 0.015;
+            vel[i * 3 + 1] = -Math.random() * 0.015 - 0.008;
             vel[i * 3 + 2] = 0;
         }
-
-        return [pos, vel];
+        return vel;
     }, []);
 
-    useFrame(() => {
-        // Skip every other frame for performance
-        frameSkip.current++;
-        if (frameSkip.current % 2 !== 0) return;
-        if (!particlesRef.current) return;
+    // Initialize positions
+    const positions = useMemo(() => {
+        const pos: THREE.Vector3[] = [];
+        for (let i = 0; i < count; i++) {
+            pos.push(new THREE.Vector3(
+                (Math.random() - 0.5) * 30,
+                (Math.random() - 0.5) * 30,
+                (Math.random() - 0.5) * 10 - 5
+            ));
+        }
+        return pos;
+    }, []);
 
-        const posAttr = particlesRef.current.geometry.attributes.position;
-        const posArray = posAttr.array as Float32Array;
+    // Set initial matrix
+    useMemo(() => {
+        if (!instancedMeshRef.current) return;
+        for (let i = 0; i < count; i++) {
+            dummy.position.copy(positions[i]);
+            dummy.updateMatrix();
+            instancedMeshRef.current.setMatrixAt(i, dummy.matrix);
+        }
+        instancedMeshRef.current.instanceMatrix.needsUpdate = true;
+    }, [positions, dummy]);
+
+    useFrame(() => {
+        // Skip 2 out of 3 frames
+        frameSkip.current++;
+        if (frameSkip.current % 3 !== 0) return;
+        if (!instancedMeshRef.current) return;
 
         for (let i = 0; i < count; i++) {
-            posArray[i * 3] += velocities[i * 3];
-            posArray[i * 3 + 1] += velocities[i * 3 + 1];
+            positions[i].x += velocities[i * 3];
+            positions[i].y += velocities[i * 3 + 1];
 
             // Reset particles that fall below
-            if (posArray[i * 3 + 1] < -15) {
-                posArray[i * 3] = (Math.random() - 0.5) * 30;
-                posArray[i * 3 + 1] = 15;
+            if (positions[i].y < -15) {
+                positions[i].x = (Math.random() - 0.5) * 30;
+                positions[i].y = 15;
             }
+
+            dummy.position.copy(positions[i]);
+            dummy.updateMatrix();
+            instancedMeshRef.current.setMatrixAt(i, dummy.matrix);
         }
 
-        posAttr.needsUpdate = true;
+        instancedMeshRef.current.instanceMatrix.needsUpdate = true;
     });
 
     return (
-        <points ref={particlesRef}>
-            <bufferGeometry>
-                <bufferAttribute
-                    attach="attributes-position"
-                    count={count}
-                    array={positions}
-                    itemSize={3}
-                />
-            </bufferGeometry>
-            <pointsMaterial
+        <instancedMesh
+            ref={instancedMeshRef}
+            args={[particleGeometry, undefined, count]}
+        >
+            <meshBasicMaterial
                 color="#6366f1"
-                size={0.06}
                 transparent
                 opacity={0.5}
-                sizeAttenuation
+                side={THREE.DoubleSide}
             />
-        </points>
+        </instancedMesh>
     );
 });
 
@@ -80,12 +97,12 @@ const StaticGrid = memo(() => {
     return (
         <group>
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -5, 0]}>
-                <planeGeometry args={[50, 50, 30, 30]} />
+                <planeGeometry args={[50, 50, 20, 20]} />
                 <meshBasicMaterial
                     color="#0a0a15"
                     wireframe
                     transparent
-                    opacity={0.25}
+                    opacity={0.2}
                 />
             </mesh>
 
@@ -95,7 +112,7 @@ const StaticGrid = memo(() => {
                 <meshBasicMaterial
                     color="#6366f1"
                     transparent
-                    opacity={0.4}
+                    opacity={0.35}
                 />
             </mesh>
         </group>
@@ -104,34 +121,42 @@ const StaticGrid = memo(() => {
 
 StaticGrid.displayName = 'StaticGrid';
 
-// Static circuit nodes - no animation
+// Static circuit nodes - reduced with instancing
 const StaticNodes = memo(() => {
-    const nodes = useMemo(() => {
-        const nodeData: { position: [number, number, number], color: string }[] = [];
+    const instancedMeshRef = useRef<THREE.InstancedMesh>(null);
+    const count = 15; // Reduced from 25
+    const dummy = useMemo(() => new THREE.Object3D(), []);
 
-        for (let i = 0; i < 25; i++) { // Reduced from 50
-            const x = (Math.random() - 0.5) * 35;
-            const y = (Math.random() - 0.5) * 15;
-            const z = -8 - Math.random() * 5;
-
-            nodeData.push({
-                position: [x, y, z],
-                color: Math.random() > 0.5 ? '#06b6d4' : '#8b5cf6'
-            });
+    const nodePositions = useMemo(() => {
+        const nodes: THREE.Vector3[] = [];
+        for (let i = 0; i < count; i++) {
+            nodes.push(new THREE.Vector3(
+                (Math.random() - 0.5) * 35,
+                (Math.random() - 0.5) * 15,
+                -8 - Math.random() * 5
+            ));
         }
-
-        return nodeData;
+        return nodes;
     }, []);
 
+    // Set initial matrix
+    useMemo(() => {
+        if (!instancedMeshRef.current) return;
+        for (let i = 0; i < count; i++) {
+            dummy.position.copy(nodePositions[i]);
+            dummy.updateMatrix();
+            instancedMeshRef.current.setMatrixAt(i, dummy.matrix);
+        }
+        instancedMeshRef.current.instanceMatrix.needsUpdate = true;
+    }, [nodePositions, dummy]);
+
     return (
-        <group>
-            {nodes.map((node, i) => (
-                <mesh key={i} position={node.position}>
-                    <sphereGeometry args={[0.04, 6, 6]} />
-                    <meshBasicMaterial color={node.color} transparent opacity={0.35} />
-                </mesh>
-            ))}
-        </group>
+        <instancedMesh
+            ref={instancedMeshRef}
+            args={[nodeGeometry, undefined, count]}
+        >
+            <meshBasicMaterial color="#8b5cf6" transparent opacity={0.3} />
+        </instancedMesh>
     );
 });
 
@@ -145,8 +170,8 @@ export const BackgroundGrid = memo(({ scrollY = 0 }: BackgroundGridProps) => {
             <StaticNodes />
 
             {/* Simplified lighting */}
-            <ambientLight intensity={0.15} />
-            <pointLight position={[10, 10, 5]} intensity={0.4} color="#6366f1" />
+            <ambientLight intensity={0.12} />
+            <pointLight position={[10, 10, 5]} intensity={0.3} color="#6366f1" distance={50} />
         </group>
     );
 });
@@ -154,3 +179,4 @@ export const BackgroundGrid = memo(({ scrollY = 0 }: BackgroundGridProps) => {
 BackgroundGrid.displayName = 'BackgroundGrid';
 
 export default BackgroundGrid;
+
