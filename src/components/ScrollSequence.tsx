@@ -9,53 +9,79 @@ interface ScrollSequenceProps {
 
 const ScrollSequence = ({ frameCount, urlFunction, className = "" }: ScrollSequenceProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
+  const imagesRef = useRef<(HTMLImageElement | null)[]>(new Array(frameCount).fill(null));
   const [imagesLoaded, setImagesLoaded] = useState(0);
 
   // Preload all images logic
   useEffect(() => {
     let isMounted = true;
-    const loadedImages: HTMLImageElement[] = [];
     let loadedCount = 0;
 
     const loadImages = async () => {
-      // Pre-allocate array
-      for (let i = 0; i < frameCount; i++) {
-        loadedImages.push(new Image());
-      }
-
-      for (let i = 0; i < frameCount; i++) {
-        if (!isMounted) return;
-        
-        const img = new Image();
-        img.src = urlFunction(i);
+      // 1. Load the first crucial frame instantly and await ONLY this one
+      try {
+        const firstImg = new Image();
+        firstImg.decoding = "async";
+        firstImg.src = urlFunction(0);
         
         await new Promise((resolve) => {
-          img.onload = () => {
-            loadedCount++;
-            setImagesLoaded(loadedCount);
-            resolve(null);
-          };
-          img.onerror = () => {
-            // Handle error, maybe fallback
-            loadedCount++;
-            setImagesLoaded(loadedCount);
-            resolve(null);
-          };
+          firstImg.onload = resolve;
+          firstImg.onerror = resolve; // Continue on error
         });
-        
-        loadedImages[i] = img;
-      }
-      
-      if (isMounted) {
-        setImages(loadedImages);
-        // Draw first frame immediately once the first image is loaded
-        if (loadedImages[0] && canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(loadedImages[0], 0, 0, canvasRef.current.width, canvasRef.current.height);
+
+        if (!isMounted) return;
+
+        imagesRef.current[0] = firstImg;
+        loadedCount++;
+        setImagesLoaded(loadedCount);
+
+        // Instantly draw the first frame so the background fills
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx && firstImg.complete && firstImg.naturalWidth > 0) {
+            const canvasRatio = canvas.width / canvas.height;
+            const imgRatio = firstImg.width / firstImg.height;
+            let drawWidth = canvas.width;
+            let drawHeight = canvas.height;
+            let offsetX = 0;
+            let offsetY = 0;
+            if (canvasRatio > imgRatio) {
+              drawHeight = canvas.width / imgRatio;
+              offsetY = (canvas.height - drawHeight) / 2;
+            } else {
+              drawWidth = canvas.height * imgRatio;
+              offsetX = (canvas.width - drawWidth) / 2;
+            }
+            ctx.drawImage(firstImg, offsetX, offsetY, drawWidth, drawHeight);
           }
         }
+      } catch (e) {
+        console.error("Failed loading initial frame", e);
+      }
+
+      // 2. Queue the rest of the sequence in the background (concurrently unblocked)
+      for (let i = 1; i < frameCount; i++) {
+        if (!isMounted) break;
+        
+        const img = new Image();
+        img.decoding = "async";
+        img.src = urlFunction(i);
+        
+        img.onload = () => {
+          if (!isMounted) return;
+          loadedCount++;
+          // Only update React state occasionally to prevent render thrashing
+          if (loadedCount % 5 === 0 || loadedCount === frameCount) {
+              setImagesLoaded(loadedCount);
+          }
+        };
+        img.onerror = () => {
+          if (!isMounted) return;
+          loadedCount++;
+        };
+        
+        imagesRef.current[i] = img;
       }
     };
 
@@ -70,50 +96,60 @@ const ScrollSequence = ({ frameCount, urlFunction, className = "" }: ScrollSeque
 
   // Whenever the scroll progresses, we draw the corresponding frame onto the canvas
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (images.length === 0 || !canvasRef.current) return;
+    if (!canvasRef.current || imagesRef.current[0] === null) return;
 
     // Map [0, 1] to [0, frameCount - 1]
-    const frameIndex = Math.min(
+    const targetFrameIndex = Math.min(
       frameCount - 1,
       Math.max(0, Math.floor(latest * frameCount))
     );
 
-    const img = images[frameIndex];
-    if (img && img.complete) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
+    // Fallback logic: If the target frame hasn't finished loading yet,
+    // gracefully render the closest available earlier frame
+    let frameIndexToDraw = targetFrameIndex;
+    let img = imagesRef.current[frameIndexToDraw];
+
+    while (frameIndexToDraw >= 0 && (!img || !img.complete || img.naturalWidth === 0)) {
+        frameIndexToDraw--;
+        img = imagesRef.current[frameIndexToDraw];
+    }
+
+    // Nothing available yet
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    
+    if (ctx) {
+      // Clear and draw
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      if (ctx) {
-        // Clear and draw
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Calculate aspect ratio to cover the canvas (object-fit: cover logic)
-        const canvasRatio = canvas.width / canvas.height;
-        const imgRatio = img.width / img.height;
-        
-        let drawWidth = canvas.width;
-        let drawHeight = canvas.height;
-        let offsetX = 0;
-        let offsetY = 0;
+      // Calculate aspect ratio to cover the canvas (object-fit: cover logic)
+      const canvasRatio = canvas.width / canvas.height;
+      const imgRatio = img.width / img.height;
+      
+      let drawWidth = canvas.width;
+      let drawHeight = canvas.height;
+      let offsetX = 0;
+      let offsetY = 0;
 
-        if (canvasRatio > imgRatio) {
-          drawHeight = canvas.width / imgRatio;
-          offsetY = (canvas.height - drawHeight) / 2;
-        } else {
-          drawWidth = canvas.height * imgRatio;
-          offsetX = (canvas.width - drawWidth) / 2;
-        }
-
-        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+      if (canvasRatio > imgRatio) {
+        drawHeight = canvas.width / imgRatio;
+        offsetY = (canvas.height - drawHeight) / 2;
+      } else {
+        drawWidth = canvas.height * imgRatio;
+        offsetX = (canvas.width - drawWidth) / 2;
       }
+
+      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
     }
   });
 
-  // Calculate loading progress text opacity (fades out when nearly done)
+  // Calculate loading progress text opacity (fades out when the first image is ready)
   const loadingOpacity = useMemo(() => {
-    if (imagesLoaded >= frameCount * 0.9) return 0;
+    if (imagesLoaded >= 1) return 0; // Hide spinner almost instantly!
     return 1;
-  }, [imagesLoaded, frameCount]);
+  }, [imagesLoaded]);
 
   return (
     <div className={`fixed inset-0 w-full h-[100vh] -z-50 pointer-events-none bg-background ${className}`}>

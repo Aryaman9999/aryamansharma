@@ -126,7 +126,7 @@ const Index = () => {
 
             <ScrollSequence 
               frameCount={80} // Since it's 8 seconds at 10 fps
-              urlFunction={(frame) => `/frames/frame_${(frame + 1).toString().padStart(4, '0')}.jpg`}
+              urlFunction={(frame) => `/frames/frame_${(frame + 1).toString().padStart(4, '0')}.webp`}
             />
 
             <Suspense fallback={<SectionFallback />}>
