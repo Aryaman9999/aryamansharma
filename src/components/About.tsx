@@ -29,10 +29,7 @@ const About = () => {
   const paragraphs = content.content.split('\n').filter(p => p.trim());
 
   return (
-    <section id="about" className="relative py-32 px-6 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-muted/5 via-background to-muted/5 pointer-events-none" />
-
+    <section id="about" className="relative py-32 px-6 overflow-hidden bg-transparent">
       <div className="container relative z-10 mx-auto max-w-5xl">
         <div className="flex flex-col lg:flex-row gap-16 items-center">
 

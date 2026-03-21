@@ -41,9 +41,8 @@ const Career = () => {
   };
 
   return (
-    <section id="career" className="relative py-32 px-6 overflow-hidden">
+    <section id="career" className="relative py-32 px-6 overflow-hidden bg-transparent">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/5 to-background pointer-events-none" />
       <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
 
       {/* Decorative circuit lines */}

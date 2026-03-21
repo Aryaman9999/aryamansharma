@@ -37,12 +37,12 @@ const NewsFeed = () => {
       );
       if (!response.ok) throw new Error("Failed to fetch articles");
       const data = await response.json();
-      
+
       // Strict whitelist based on user preferences
       // Note: 'ai' is excluded from this check to ensure we filter for specific relevance
       // beyond just the base tag.
       const allowedInterests = [
-        "programming", "chatgpt", "llm", "opensource", "devops", 
+        "programming", "chatgpt", "llm", "opensource", "devops",
         "tooling", "webdev", "rag", "tech", "automation", "tool", "tools",
         // Including variations/synonyms of the user's requested tags for robustness
         "gpt", "machine learning", "deep learning", "generative ai"
@@ -51,10 +51,10 @@ const NewsFeed = () => {
       const validArticles = data.filter((article: Article) => {
         const title = article.title.toLowerCase();
         const tags = article.tag_list.map(t => t.toLowerCase());
-        
+
         // 1. Filter out Challenges/Hackathons
-        const isChallenge = 
-          title.includes('challenge') || 
+        const isChallenge =
+          title.includes('challenge') ||
           tags.includes('challenge') ||
           tags.includes('hackathon') ||
           /day\s*\d+/.test(title);
@@ -88,7 +88,7 @@ const NewsFeed = () => {
   };
 
   return (
-    <section id="news" className="py-16 border-t border-border/40 bg-secondary/5">
+    <section id="news" className="py-16 border-t border-border/40 bg-black/40">
       <div className="container px-6 mx-auto mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -121,20 +121,20 @@ const NewsFeed = () => {
               ))}
             </div>
           ) : error ? (
-             <div className="w-full p-8 text-center border border-dashed rounded-lg border-destructive/50">
-               <p className="text-muted-foreground">Unable to load AI news at this moment.</p>
-             </div>
+            <div className="w-full p-8 text-center border border-dashed rounded-lg border-destructive/50">
+              <p className="text-muted-foreground">Unable to load AI news at this moment.</p>
+            </div>
           ) : (
             <div className="flex gap-5">
               {articles.map((article) => (
-                <article 
-                  key={article.id} 
+                <article
+                  key={article.id}
                   className="group relative flex flex-col min-w-[300px] max-w-[300px] h-[380px] bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex-shrink-0 snap-center"
                 >
                   <div className="h-40 overflow-hidden bg-secondary">
                     {article.cover_image ? (
-                      <img 
-                        src={article.cover_image} 
+                      <img
+                        src={article.cover_image}
                         alt={article.title}
                         className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
@@ -164,14 +164,14 @@ const NewsFeed = () => {
 
                     <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <img 
-                          src={article.user.profile_image} 
+                        <img
+                          src={article.user.profile_image}
                           alt={article.user.name}
                           className="w-5 h-5 rounded-full"
                         />
                         <span className="truncate max-w-[80px]">{article.user.name}</span>
                       </div>
-                      
+
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1">
                           <Heart className="w-3 h-3" />
@@ -187,7 +187,7 @@ const NewsFeed = () => {
                 </article>
               ))}
               <div className="flex flex-col items-center justify-center min-w-[150px] gap-2 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer flex-shrink-0 snap-center"
-                   onClick={() => window.open('https://dev.to/t/ai', '_blank')}
+                onClick={() => window.open('https://dev.to/t/ai', '_blank')}
               >
                 <div className="p-3 rounded-full bg-secondary">
                   <ChevronRight className="w-6 h-6" />

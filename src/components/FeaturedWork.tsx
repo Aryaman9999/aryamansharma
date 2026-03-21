@@ -27,9 +27,8 @@ const FeaturedWork = () => {
   };
 
   return (
-    <section id="work" className="relative py-32 px-6 overflow-hidden">
+    <section id="work" className="relative py-32 px-6 overflow-hidden bg-transparent">
       {/* Background decorations */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/5 to-background pointer-events-none" />
       <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
 
       <div className="container relative z-10 mx-auto max-w-6xl">
@@ -37,17 +36,16 @@ const FeaturedWork = () => {
         <FadeInUp>
           <div className="text-center mb-16">
             <motion.div
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/20 mb-6"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-sm glass-strong border-l-2 border-l-primary border-r-0 border-t-0 border-b-0 mb-6 bg-gradient-to-r from-primary/10 to-transparent"
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-sm text-muted-foreground">Portfolio</span>
+              <span className="font-mono text-xs font-bold text-primary tracking-wider uppercase">PORTFOLIO_SYS</span>
             </motion.div>
 
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-              <DecodingText text="My Work" duration={1500} glitchIntensity="medium" />
+              <DecodingText text="My Work" duration={1500} />
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               A collection of projects showcasing my expertise in Electronics, AI, and Software Engineering

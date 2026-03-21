@@ -67,8 +67,6 @@ const Navigation = () => {
     { id: 'work', label: 'Work' },
     { id: 'about', label: 'About' },
     { id: 'career', label: 'Career' },
-    { id: 'blog', label: 'Blog' },
-    { id: 'news', label: 'News' },
   ];
 
   return (

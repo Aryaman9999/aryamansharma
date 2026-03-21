@@ -114,7 +114,7 @@ const Hero = () => {
             </Suspense>
 
             {/* Gradient overlay for readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-transparent pointer-events-none" />
 
             {/* Decorative circuit lines */}
             <div className="absolute inset-0 circuit-decoration opacity-20 pointer-events-none" />
@@ -131,23 +131,38 @@ const Hero = () => {
 
                     {/* Text Content */}
                     <motion.div
-                        className="flex-1 text-center lg:text-left"
+                        className="flex-1 text-center lg:text-left min-w-0 w-full"
                         variants={itemVariants}
                     >
                         {/* Main Title with Decoding Effect */}
                         <motion.h1
-                            className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground mb-6 leading-tight"
+                            className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground mb-6 leading-tight break-words relative w-full"
                             variants={itemVariants}
                         >
-                            {content.title ? (
-                                <DecodingText
-                                    text={content.title.replace(/\*\*/g, '')}
-                                    duration={600}
-                                    as="span"
-                                />
-                            ) : (
-                                <span className="opacity-0">Loading</span>
-                            )}
+                            {/* 
+                                GHOST TEXT: This invisible text perfectly sizes the container strictly
+                                to the exact number of lines and width the text needs on any screen size. 
+                                It prevents both layout-bouncing during the scramble AND extra empty space.
+                            */}
+                            <span className="opacity-0 pointer-events-none block select-none" aria-hidden="true">
+                                {content.title ? content.title.replace(/\*\*/g, '').replace(/\|/g, '•') : "Loading"}
+                            </span>
+
+                            {/* 
+                                VISIBLE ANIMATING TEXT: This text sits exactly on top of the ghost text 
+                                and can scramble, warp, wrap, and overflow without affecting the document layout!
+                            */}
+                            <span className="absolute top-0 left-0 w-full h-full text-center lg:text-left overflow-hidden">
+                                {content.title ? (
+                                    <DecodingText
+                                        text={content.title.replace(/\*\*/g, '').replace(/\|/g, '•')}
+                                        duration={600}
+                                        as="span"
+                                    />
+                                ) : (
+                                    <span className="opacity-0">Loading</span>
+                                )}
+                            </span>
                         </motion.h1>
 
                         {/* Description */}

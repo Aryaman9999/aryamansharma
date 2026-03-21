@@ -55,10 +55,7 @@ const Contact = () => {
   ].filter(item => item.platform);
 
   return (
-    <section id="contact" className="relative py-32 px-6 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/10 to-background pointer-events-none" />
-
+    <section id="contact" className="relative py-32 px-6 overflow-hidden bg-transparent">
       {/* Decorative elements */}
       <div className="absolute top-1/4 left-0 w-1/3 h-1/2 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-0 w-1/3 h-1/2 bg-secondary/5 rounded-full blur-3xl pointer-events-none" />

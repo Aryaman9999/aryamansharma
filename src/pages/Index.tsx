@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
+import ScrollSequence from "@/components/ScrollSequence";
 
 // Lazy load heavy components
 const SocialProof = lazy(() => import("@/components/SocialProof"));
@@ -109,7 +110,7 @@ const Index = () => {
 
       {/* Main content */}
       <ContentWrapper>
-        <div className="min-h-screen bg-background overflow-x-hidden">
+        <div className="min-h-screen bg-transparent overflow-x-hidden relative">
           {/* Note: 3D Background is integrated into Hero section to avoid multiple WebGL contexts */}
 
           {/* Navigation - always load immediately */}
@@ -122,6 +123,11 @@ const Index = () => {
             transition={{ duration: 0.3 }}
           >
             <Hero />
+
+            <ScrollSequence 
+              frameCount={80} // Since it's 8 seconds at 10 fps
+              urlFunction={(frame) => `/frames/frame_${(frame + 1).toString().padStart(4, '0')}.jpg`}
+            />
 
             <Suspense fallback={<SectionFallback />}>
               <SocialProof />

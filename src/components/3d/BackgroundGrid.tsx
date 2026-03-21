@@ -105,16 +105,6 @@ const StaticGrid = memo(() => {
                     opacity={0.2}
                 />
             </mesh>
-
-            {/* Glowing horizon line */}
-            <mesh position={[0, -5, -20]} rotation={[0, 0, 0]}>
-                <planeGeometry args={[80, 0.3]} />
-                <meshBasicMaterial
-                    color="#6366f1"
-                    transparent
-                    opacity={0.35}
-                />
-            </mesh>
         </group>
     );
 });

@@ -20,30 +20,37 @@ export const DecodingText = ({
     as: Tag = 'span',
     triggerOnView = true,
 }: DecodingTextProps) => {
-    const [displayText, setDisplayText] = useState(text); // Start with full text to prevent layout shift
-    const [isDecoding, setIsDecoding] = useState(false);
+    const [displayText, setDisplayText] = useState(text);
     const [hasDecoded, setHasDecoded] = useState(false);
     const containerRef = useRef<HTMLElement>(null);
     const timeoutRef = useRef<NodeJS.Timeout>();
+    const intervalRef = useRef<NodeJS.Timeout>();
+    const isDecodingRef = useRef(false);
 
-    // Memoize the final text to prevent unnecessary re-renders
+    // Memoize the final text
     const finalText = useMemo(() => text, [text]);
 
     useEffect(() => {
-        // Set display text immediately to prevent layout shift
+        // Reset state on text change
         setDisplayText(finalText);
+        setHasDecoded(false);
+        isDecodingRef.current = false;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    }, [finalText]);
 
+    useEffect(() => {
         if (!triggerOnView) {
             timeoutRef.current = setTimeout(() => {
                 startDecoding();
             }, delay);
-            return () => clearTimeout(timeoutRef.current);
+            return cleanup;
         }
 
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    if (entry.isIntersecting && !hasDecoded && !isDecoding) {
+                    if (entry.isIntersecting && !hasDecoded && !isDecodingRef.current) {
                         timeoutRef.current = setTimeout(() => {
                             startDecoding();
                         }, delay);
@@ -59,37 +66,36 @@ export const DecodingText = ({
 
         return () => {
             observer.disconnect();
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            cleanup();
         };
-    }, [triggerOnView, delay, hasDecoded, finalText]);
+    }, [triggerOnView, delay, finalText]);
+
+    const cleanup = () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+    };
 
     const startDecoding = () => {
-        if (isDecoding || hasDecoded) return;
-
-        setIsDecoding(true);
+        if (isDecodingRef.current || hasDecoded) return;
+        isDecodingRef.current = true;
 
         const textLength = finalText.length;
-        const intervalTime = Math.min(30, duration / (textLength * 2)); // Faster for longer text
+        const intervalTime = Math.min(30, duration / (textLength * 2));
         let frame = 0;
-        const maxFrames = Math.min(textLength * 2, 40); // Cap iterations for long text
+        const maxFrames = Math.min(textLength * 2, 40);
 
-        const interval = setInterval(() => {
+        intervalRef.current = setInterval(() => {
             const progress = frame / maxFrames;
 
             const newText = finalText
                 .split('')
                 .map((char, index) => {
-                    // Determine if this character should be revealed
                     const charProgress = index / textLength;
 
                     if (progress >= charProgress) {
-                        return char; // Reveal the actual character
+                        return char;
                     }
-
-                    // Keep spaces as spaces
                     if (char === ' ') return ' ';
-
-                    // Random scramble character
                     return CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
                 })
                 .join('');
@@ -98,14 +104,12 @@ export const DecodingText = ({
             frame++;
 
             if (frame >= maxFrames) {
-                clearInterval(interval);
+                if (intervalRef.current) clearInterval(intervalRef.current);
                 setDisplayText(finalText);
-                setIsDecoding(false);
+                isDecodingRef.current = false;
                 setHasDecoded(true);
             }
         }, intervalTime);
-
-        return () => clearInterval(interval);
     };
 
     return (
