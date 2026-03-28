@@ -7,10 +7,15 @@ import { DecodingText } from "@/components/ui/DecodingText";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { FadeInUp, Parallax } from "@/components/ui/ScrollAnimations";
 
-// Lazy load the 3D scene for better initial load performance
-const HeroScene = lazy(() =>
-    import("@/components/3d/Scene").then(mod => ({ default: mod.HeroScene }))
+// Skip 3D scene import entirely on mobile — avoid downloading the 900KB Three.js bundle
+const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    typeof navigator !== 'undefined' ? navigator.userAgent : ''
 );
+
+// Only lazy-load the 3D scene on desktop
+const HeroScene = isMobileDevice
+    ? null
+    : lazy(() => import("@/components/3d/Scene").then(mod => ({ default: mod.HeroScene })));
 
 const Hero = ({ isLowEnd = false }: { isLowEnd?: boolean }) => {
     const [content, setContent] = useState(() => {
@@ -25,7 +30,9 @@ const Hero = ({ isLowEnd = false }: { isLowEnd?: boolean }) => {
     });
 
     const [resumeUrl, setResumeUrl] = useState<string>("");
-    const [isLoaded, setIsLoaded] = useState(false);
+    // If we have cached content, render immediately (no CLS from delayed appearance)
+    const hasCachedContent = !!localStorage.getItem("hero_content");
+    const [isLoaded, setIsLoaded] = useState(hasCachedContent);
 
     useEffect(() => {
         loadContent();
@@ -108,10 +115,12 @@ const Hero = ({ isLowEnd = false }: { isLowEnd?: boolean }) => {
             id="hero"
             className="relative min-h-screen flex items-center justify-center px-6 pt-24 pb-20 overflow-hidden"
         >
-            {/* 3D Background Scene - lazy loaded */}
-            <Suspense fallback={null}>
-                <HeroScene isLowEnd={isLowEnd} />
-            </Suspense>
+            {/* 3D Background Scene - lazy loaded (skipped on mobile) */}
+            {HeroScene && (
+                <Suspense fallback={null}>
+                    <HeroScene isLowEnd={isLowEnd} />
+                </Suspense>
+            )}
 
             {/* Gradient overlay for readability */}
             <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-transparent pointer-events-none" />
@@ -239,6 +248,7 @@ const Hero = ({ isLowEnd = false }: { isLowEnd?: boolean }) => {
                                             alt="Aryaman"
                                             className="w-full h-full object-cover"
                                             loading="eager"
+                                            fetchPriority="high"
                                         />
                                         {/* Overlay glow */}
                                         <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />

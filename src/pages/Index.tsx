@@ -1,5 +1,4 @@
-import { useEffect, useState, lazy, Suspense, memo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState, lazy, Suspense } from "react";
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
@@ -45,51 +44,16 @@ const useDevicePerformance = () => {
   return { isLowEnd, isMobile };
 };
 
-// Simple loader - optimized with no heavy animations
-const Loader = memo(({ isLoading }: { isLoading: boolean }) => {
-  return (
-    <AnimatePresence>
-      {isLoading && (
-        <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="relative flex flex-col items-center gap-6">
-            {/* Simple CSS spinner - no JS animation overhead */}
-            <div className="w-12 h-12 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <span className="text-muted-foreground text-sm animate-pulse">
-              Loading...
-            </span>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-});
 
-Loader.displayName = 'Loader';
-
-// Section fallback for lazy loading
-const SectionFallback = () => (
-  <div className="min-h-[200px] flex items-center justify-center">
+// Section fallback for lazy loading - matches approximate real section heights to prevent CLS
+const SectionFallback = ({ minHeight = '600px' }: { minHeight?: string }) => (
+  <div className="flex items-center justify-center" style={{ minHeight }}>
     <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
   </div>
 );
 
 const Index = () => {
-  const [isLoading, setIsLoading] = useState(true);
   const { isLowEnd, isMobile } = useDevicePerformance();
-
-  useEffect(() => {
-    // Faster loading - just wait for initial paint
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Wrapper component that conditionally includes MagneticCursor
   const ContentWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -106,73 +70,56 @@ const Index = () => {
   };
 
   return (
-    <>
-      {/* Simple loader */}
-      <Loader isLoading={isLoading} />
+    <ContentWrapper>
+      <div className="min-h-screen bg-transparent overflow-x-hidden relative">
+        {/* Navigation - always load immediately */}
+        <Navigation />
 
-      {/* Main content */}
-      <ContentWrapper>
-        <div className="min-h-screen bg-transparent overflow-x-hidden relative">
-          {/* Note: 3D Background is integrated into Hero section to avoid multiple WebGL contexts */}
-
-          {/* Navigation - always load immediately */}
-          <Navigation />
-
-          {/* Main sections with lazy loading */}
-          <motion.main
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isLoading ? 0 : 1 }}
-            transition={{ duration: 0.3 }}
-          >
+          <main>
             <Hero isLowEnd={isLowEnd} />
 
-            {/* Defer ScrollSequence until after initial load */}
-            {!isLoading && (
-              <Suspense fallback={null}>
-                <ScrollSequence 
-                  frameCount={isLowEnd ? 40 : 80}
-                  urlFunction={(frame) => {
-                    // On low-end, skip every other frame (1,3,5,...)
-                    const actualFrame = isLowEnd ? (frame * 2 + 1) : (frame + 1);
-                    return `/frames/frame_${actualFrame.toString().padStart(4, '0')}.webp`;
-                  }}
-                />
-              </Suspense>
-            )}
+            <Suspense fallback={null}>
+              <ScrollSequence 
+                frameCount={isLowEnd ? 40 : 80}
+                urlFunction={(frame) => {
+                  const actualFrame = isLowEnd ? (frame * 2 + 1) : (frame + 1);
+                  return `/frames/frame_${actualFrame.toString().padStart(4, '0')}.webp`;
+                }}
+              />
+            </Suspense>
 
-            <Suspense fallback={<SectionFallback />}>
+            <Suspense fallback={<SectionFallback minHeight="100px" />}>
               <SocialProof />
             </Suspense>
 
-            <Suspense fallback={<SectionFallback />}>
+            <Suspense fallback={<SectionFallback minHeight="800px" />}>
               <FeaturedWork />
             </Suspense>
 
-            <Suspense fallback={<SectionFallback />}>
+            <Suspense fallback={<SectionFallback minHeight="600px" />}>
               <About />
             </Suspense>
 
-            <Suspense fallback={<SectionFallback />}>
+            <Suspense fallback={<SectionFallback minHeight="700px" />}>
               <Career />
             </Suspense>
 
-            <Suspense fallback={<SectionFallback />}>
+            <Suspense fallback={<SectionFallback minHeight="500px" />}>
               <Blog />
             </Suspense>
 
-            <Suspense fallback={<SectionFallback />}>
+            <Suspense fallback={<SectionFallback minHeight="600px" />}>
               <NewsFeed />
             </Suspense>
 
-            <Suspense fallback={<SectionFallback />}>
+            <Suspense fallback={<SectionFallback minHeight="500px" />}>
               <Contact />
             </Suspense>
 
             <Footer />
-          </motion.main>
+          </main>
         </div>
       </ContentWrapper>
-    </>
   );
 };
 
