@@ -30,17 +30,17 @@ const About = () => {
 
   return (
     <section id="about" className="relative py-32 px-6 overflow-hidden bg-transparent">
-      <div className="container relative z-10 mx-auto max-w-5xl">
-        <div className="flex flex-col lg:flex-row gap-16 items-center">
+      <div className="container relative z-10 mx-auto max-w-6xl">
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-center lg:items-start">
 
           {/* Image Section - Simple and Clean */}
-          <Reveal direction="left" className="flex-shrink-0">
-            <div className="w-64 lg:w-80 aspect-[3/4] rounded-lg overflow-hidden shadow-xl">
+          <Reveal direction="left" className="w-full lg:w-5/12 flex-shrink-0 flex justify-center lg:sticky lg:top-32">
+            <div className="w-full max-w-[500px] lg:max-w-none aspect-[3/2] rounded-lg overflow-hidden shadow-xl">
               {content.image_url ? (
                 <img
                   src={content.image_url}
                   alt="Profile"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-center"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted">
@@ -51,7 +51,7 @@ const About = () => {
           </Reveal>
 
           {/* Content Section */}
-          <div className="flex-1">
+          <div className="w-full lg:w-7/12">
             <FadeInUp>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-secondary/20 mb-6">
                 <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
