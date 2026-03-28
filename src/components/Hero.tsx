@@ -12,7 +12,7 @@ const HeroScene = lazy(() =>
     import("@/components/3d/Scene").then(mod => ({ default: mod.HeroScene }))
 );
 
-const Hero = () => {
+const Hero = ({ isLowEnd = false }: { isLowEnd?: boolean }) => {
     const [content, setContent] = useState(() => {
         const cached = localStorage.getItem("hero_content");
         return cached ? JSON.parse(cached) : {
@@ -110,7 +110,7 @@ const Hero = () => {
         >
             {/* 3D Background Scene - lazy loaded */}
             <Suspense fallback={null}>
-                <HeroScene />
+                <HeroScene isLowEnd={isLowEnd} />
             </Suspense>
 
             {/* Gradient overlay for readability */}

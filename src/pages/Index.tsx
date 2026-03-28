@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
-import ScrollSequence from "@/components/ScrollSequence";
+
+// Lazy load ScrollSequence so it doesn't block initial paint
+const ScrollSequence = lazy(() => import("@/components/ScrollSequence"));
 
 // Lazy load heavy components
 const SocialProof = lazy(() => import("@/components/SocialProof"));
@@ -122,12 +124,21 @@ const Index = () => {
             animate={{ opacity: isLoading ? 0 : 1 }}
             transition={{ duration: 0.3 }}
           >
-            <Hero />
+            <Hero isLowEnd={isLowEnd} />
 
-            <ScrollSequence 
-              frameCount={80} // Since it's 8 seconds at 10 fps
-              urlFunction={(frame) => `/frames/frame_${(frame + 1).toString().padStart(4, '0')}.webp`}
-            />
+            {/* Defer ScrollSequence until after initial load */}
+            {!isLoading && (
+              <Suspense fallback={null}>
+                <ScrollSequence 
+                  frameCount={isLowEnd ? 40 : 80}
+                  urlFunction={(frame) => {
+                    // On low-end, skip every other frame (1,3,5,...)
+                    const actualFrame = isLowEnd ? (frame * 2 + 1) : (frame + 1);
+                    return `/frames/frame_${actualFrame.toString().padStart(4, '0')}.webp`;
+                  }}
+                />
+              </Suspense>
+            )}
 
             <Suspense fallback={<SectionFallback />}>
               <SocialProof />

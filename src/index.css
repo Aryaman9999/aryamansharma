@@ -111,6 +111,8 @@
   /* Content containment for sections - improves layout performance */
   section {
     contain: layout style;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 800px;
   }
 
   /* Custom scrollbar */

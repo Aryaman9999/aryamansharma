@@ -168,6 +168,54 @@ const CornerAccent = memo(({ position, isDark }: {
 
 CornerAccent.displayName = 'CornerAccent';
 
+// Instanced bond wires - renders all wire segments in a single draw call
+const bondWireGeometry = new THREE.CylinderGeometry(0.008, 0.008, 0.15, 4);
+
+const BondWires = memo(({ wires }: {
+    wires: { start: [number, number, number], end: [number, number, number] }[]
+}) => {
+    const instancedRef = useRef<THREE.InstancedMesh>(null);
+    const count = wires.length * 2; // two segments per wire
+    const dummy = useMemo(() => new THREE.Object3D(), []);
+
+    useEffect(() => {
+        if (!instancedRef.current) return;
+        let idx = 0;
+        for (const wire of wires) {
+            const midX = (wire.start[0] + wire.end[0]) / 2;
+            const midY = Math.max(wire.start[1], wire.end[1]) + 0.06;
+            const midZ = (wire.start[2] + wire.end[2]) / 2;
+
+            // First segment
+            dummy.position.set(
+                (wire.start[0] + midX) / 2,
+                (wire.start[1] + midY) / 2,
+                (wire.start[2] + midZ) / 2
+            );
+            dummy.updateMatrix();
+            instancedRef.current.setMatrixAt(idx++, dummy.matrix);
+
+            // Second segment
+            dummy.position.set(
+                (wire.end[0] + midX) / 2,
+                (wire.end[1] + midY) / 2,
+                (wire.end[2] + midZ) / 2
+            );
+            dummy.updateMatrix();
+            instancedRef.current.setMatrixAt(idx++, dummy.matrix);
+        }
+        instancedRef.current.instanceMatrix.needsUpdate = true;
+    }, [wires, dummy]);
+
+    return (
+        <instancedMesh ref={instancedRef} args={[bondWireGeometry, undefined, count]}>
+            <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
+        </instancedMesh>
+    );
+});
+
+BondWires.displayName = 'BondWires';
+
 interface SiliconChipProps {
     mousePosition: { x: number; y: number };
 }
@@ -527,26 +575,8 @@ export const SiliconChip = memo(({ mousePosition }: SiliconChipProps) => {
                 <ICPin key={`pin-${i}`} position={pin.position} side={pin.side} isDark={isDark} />
             ))}
 
-            {/* Bond wires - gold connections from die to package */}
-            {bondWires.map((wire, i) => {
-                const midX = (wire.start[0] + wire.end[0]) / 2;
-                const midY = Math.max(wire.start[1], wire.end[1]) + 0.06; // Arc up
-                const midZ = (wire.start[2] + wire.end[2]) / 2;
-
-                return (
-                    <group key={`bond-${i}`}>
-                        {/* Simple arc represented by 2 segments */}
-                        <mesh position={[(wire.start[0] + midX) / 2, (wire.start[1] + midY) / 2, (wire.start[2] + midZ) / 2]}>
-                            <cylinderGeometry args={[0.008, 0.008, 0.15, 4]} />
-                            <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
-                        </mesh>
-                        <mesh position={[(wire.end[0] + midX) / 2, (wire.end[1] + midY) / 2, (wire.end[2] + midZ) / 2]}>
-                            <cylinderGeometry args={[0.008, 0.008, 0.15, 4]} />
-                            <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
-                        </mesh>
-                    </group>
-                );
-            })}
+            {/* Bond wires - gold connections from die to package (instanced for performance) */}
+            <BondWires wires={bondWires} />
 
             {/* Package text/label area */}
             <mesh position={[0.4, 0.131, -0.5]} rotation={[-Math.PI / 2, 0, 0]}>

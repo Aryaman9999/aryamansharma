@@ -30,33 +30,34 @@ const throttle = <T extends (...args: any[]) => void>(func: T, limit: number) =>
     };
 };
 
-// Performance limiter - caps frame rate when not in focus
-const PerformanceLimiter = memo(() => {
-    const { invalidate, clock } = useThree();
+// Continuously invalidate the canvas so animations keep running in demand mode.
+// Uses setInterval instead of useFrame because useFrame only fires DURING a render,
+// which creates a deadlock in demand mode — nothing triggers the first render.
+const AnimationDriver = memo(() => {
+    const { invalidate } = useThree();
     const isVisible = useRef(true);
-    const lastFrame = useRef(0);
-    const targetFPS = 30; // Target 30 FPS for background 3D
-    const frameInterval = 1000 / targetFPS;
 
     useEffect(() => {
         const handleVisibilityChange = () => {
             isVisible.current = document.visibilityState === 'visible';
         };
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, []);
 
-    useFrame(() => {
-        if (!isVisible.current) return;
-        const now = performance.now();
-        if (now - lastFrame.current < frameInterval) return;
-        lastFrame.current = now;
-    });
+        // Drive the render loop at ~30 FPS via setInterval
+        const intervalId = setInterval(() => {
+            if (isVisible.current) invalidate();
+        }, 1000 / 30);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            clearInterval(intervalId);
+        };
+    }, [invalidate]);
 
     return null;
 });
 
-PerformanceLimiter.displayName = 'PerformanceLimiter';
+AnimationDriver.displayName = 'AnimationDriver';
 
 // Hook to detect current theme
 const useTheme = () => {
@@ -137,7 +138,7 @@ const SceneContent = memo(({ showChip = true }: SceneProps) => {
                 </>
             )}
 
-            <PerformanceLimiter />
+            <AnimationDriver />
         </>
     );
 });
@@ -151,7 +152,7 @@ const BackgroundSceneContent = memo(() => {
             <PerspectiveCamera makeDefault position={[0, 0, 15]} fov={60} />
             <BackgroundGrid />
             <ambientLight intensity={0.12} />
-            <PerformanceLimiter />
+            <AnimationDriver />
         </>
     );
 });
@@ -200,7 +201,7 @@ const useWebGLCapability = () => {
 };
 
 // Hero Scene with the silicon chip - with context loss handling and GPU detection
-export const HeroScene = memo(() => {
+export const HeroScene = memo(({ isLowEnd = false }: { isLowEnd?: boolean }) => {
     const [contextLost, setContextLost] = useState(false);
     const canRender3D = useWebGLCapability();
 
@@ -227,7 +228,8 @@ export const HeroScene = memo(() => {
     // - GPU capability check failed
     // - GPU capability is still loading (null)
     // - Context was lost
-    if (canRender3D === false || contextLost) {
+    // - Device is low-end
+    if (canRender3D === false || contextLost || isLowEnd) {
         return (
             <div
                 className="absolute inset-0 w-full h-full"
@@ -257,7 +259,7 @@ export const HeroScene = memo(() => {
                     preserveDrawingBuffer: false,
                 }}
                 dpr={Math.min(window.devicePixelRatio, 1.5)}
-                frameloop="always"
+                frameloop="demand"
                 performance={{ min: 0.5 }}
                 style={{ background: 'transparent' }}
                 onCreated={onCreated}
@@ -289,7 +291,7 @@ export const BackgroundScene = memo(() => {
                     depth: false,
                 }}
                 dpr={1} // Fixed DPR for background
-                frameloop="always"
+                frameloop="demand"
                 performance={{ min: 0.3 }}
                 style={{ background: 'transparent' }}
             >
